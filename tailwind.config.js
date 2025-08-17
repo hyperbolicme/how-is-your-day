@@ -7,15 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        primaryone: '#4A4729',
-        secondaryone : '#D6C9AC',
-        primarytwo: '#6293B6',
+        primaryone: '#86BBB5',
+        secondaryone : '#A7CDC9',
+        accentone: '#65A9A1',
+
+        primarytwo: '#86A6BB',
         secondarytwo: '#A7BECD',
-        thirdtwo: '#49799C',
-        hero:'#B68562',
+        accenttwo: '#49799C',
+
+        primaryhero: '#868CBB',
+        secondaryhero:'#A7ABCD',
       },
       fontFamily: {
-        merri: ['Merriweather', 'serif'],
+        merri: ['Merriweather', 'sans-serif'],
         mont: ['Montserrat', 'sans-serif'],
         poiret: ['Poiret One', 'sans-serif'],
       }

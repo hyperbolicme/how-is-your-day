@@ -26,7 +26,7 @@ function WeatherSection() {
     <section className="min-h-screen flex items-start justify-start bg-secondarytwo">
       <div className="px-40 py-10 gap-16">
         <div className="text-left py-10">
-          <h1 className="text-thirdtwo font-poiret font-bold text-3xl lg:text-5xl">
+          <h1 className="text-accenttwo font-poiret font-bold text-3xl lg:text-5xl">
             Weather
           </h1>
           {/* <form onSubmit={handleGetWeather}> */}
@@ -40,7 +40,7 @@ function WeatherSection() {
           <div className="px-0 py-3">
             <button
               onClick={handleGetWeather}
-              className="w-full bg-primarytwo text-gray-300 px-4 py-2 rounded-lg hover:bg-thirdtwo"
+              className="w-full bg-primarytwo text-gray-300 px-4 py-2 rounded-lg hover:bg-accenttwo"
             >
               How is your day?
             </button>
@@ -51,7 +51,7 @@ function WeatherSection() {
           {weather && weather.main && (
             <div className="text-primarytwo text-left">
               <p className="text-xs"> {weather.name}</p>
-              <p className="text-thirdtwo text-2xl lg:text-4xl">
+              <p className="text-accenttwo text-2xl lg:text-4xl">
                 {weather.main.temp}°C
               </p>
               <p>{weather.weather[0].description}</p>
