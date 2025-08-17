@@ -4,17 +4,13 @@ function App() {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState(null);
 
-  const getWeather = async () => {
+  const getWeather = async (city) => {
     const apiKey = "084eb917b9dc378934d053e9f0261348";
     // setCity("kochi");
     // console.log("city: ", city);
-    const cityName = "new york";
+    // const cityName = "new york";
     const query =
-      "https://api.openweathermap.org/data/2.5/weather?q=" +
-      cityName +
-      "&appid=" +
-      apiKey +
-      "&units=metric";
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
     console.log("query : ", query);
     const res = await fetch(query);
 
@@ -22,6 +18,10 @@ function App() {
     console.log("weather data: ", data);
     setWeather(data);
   };
+
+  const handleGetWeather = () => {
+    getWeather(city)
+  }
 
   return (
     <div className="min-h-screen font-mont">
@@ -32,13 +32,15 @@ function App() {
               Weather
             </h1>
             <input
+              className="w-full px-0 py-3 bg-transparent text-primarytwo border-0 border-b-2 border-gray-300 focus:border-primarytwo focus:outline-none transition-colors"
               type="text"
               placeholder="Enter city... eg. Kochi"
-              className="w-full px-0 py-3 bg-transparent border-0 border-b-2 border-gray-300 focus:border-primarytwo focus:outline-none transition-colors"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
             />
             <div className="px-0 py-3">
               <button
-                onClick={getWeather}
+                onClick={handleGetWeather}
                 className="w-full bg-primarytwo text-gray-300 px-4 py-2 rounded-lg hover:bg-thirdtwo"
               >
                 How is your day?
