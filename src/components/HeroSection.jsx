@@ -5,6 +5,10 @@ import { useGSAP } from "@gsap/react";
 function HeroSection() {
   useGSAP(() => {
     console.log("element found :", document.querySelector(".float-animate"));
+    let rand20 = ((Math.random() * 10 % 2) ? -1 : 1 ) * (Math.random() * 1000) % 20;
+    let rand10 = ((Math.random() * 10 % 2) ? -1 : 1 ) * (Math.random() * 1000) % 10;
+    console.log("rand20 = ", rand20);
+    console.log("rand10 = ", rand10);
     gsap
       .timeline()
       .from(".hero-text", {
@@ -15,12 +19,13 @@ function HeroSection() {
         stagger: 0.2,
       })
       .to(".float-animate", {
-        y: 20,
-        x: -10,
+        y: 0,
+        x: rand10,
         duration: 3,
         ease: "power1.inOut",
         yoyo: true,
         repeat: -1,
+        stagger: 0.2,
       });
   });
 
