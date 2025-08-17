@@ -5,7 +5,7 @@ function WeatherSection() {
   const [weather, setWeather] = useState(null);
 
   async function getWeather(city) {
-    const apiKey = "084eb917b9dc378934d053e9f0261348";
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
     const query = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
     console.log("query : ", query);
