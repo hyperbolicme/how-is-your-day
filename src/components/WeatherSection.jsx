@@ -23,8 +23,8 @@ function WeatherSection() {
 
   return (
     <div>
-    <section className="h-screen/3 min-h-[33vh] flex items-start justify-start bg-secondarytwo">
-      <div className="px-40 py-10 grid grid-cols-1 lg:grid-cols-2 gap-16">
+    <section className="min-h-screen flex items-start justify-start bg-secondarytwo">
+      <div className="px-40 py-10 gap-16">
         <div className="text-left py-10">
           <h1 className="text-thirdtwo font-poiret font-bold text-3xl lg:text-5xl">
             Weather

@@ -12,6 +12,7 @@ export default {
         primarytwo: '#6293B6',
         secondarytwo: '#A7BECD',
         thirdtwo: '#49799C',
+        hero:'#B68562',
       },
       fontFamily: {
         merri: ['Merriweather', 'serif'],
