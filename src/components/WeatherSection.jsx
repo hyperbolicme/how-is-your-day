@@ -54,8 +54,8 @@ function WeatherSection() {
             {weather && weather.main && (
               <div className="bg-gray-300 rounded-2xl shadow-lg px-6 py-4 ">
                 <div className="text-primarytwo text-left">
-                  <p className="text-xs"> {weather.name}</p>
-                  <div className="text-s grid grid-cols-2">
+                  <p className="text-xs"> {weather.name}, {weather.sys.country}</p>
+                  <div className="text-s grid grid-cols-1 lg:grid-cols-2">
                     <p>Min: {weather.main.temp_min}°C</p>
                     <p>Max: {weather.main.temp_max}°C</p>
                   </div>
