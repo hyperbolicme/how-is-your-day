@@ -23,7 +23,7 @@ function NewsSection() {
 
   return (
     <section className="min-h-screen flex items-start justify-start bg-secondaryone text-primaryone">
-      <div className="px-40 py-10">
+      <div className="px-10 py-10">
         <h1 className="float-animate text-accentone font-poiret font-bold text-3xl lg:text-5xl">
           News in {country.toUpperCase()}
         </h1>
@@ -36,17 +36,22 @@ function NewsSection() {
             Get news
           </button>
         </div>
-        {news && news.articles && 
-          news.articles.map((article, index) =>
-          (index < 10) && 
-          (<div>
-            <p className="font-bold "> {article.title}</p>
-            <p>{article.description}</p>
-            <p> <a className="text-accentone" href={article.url}>[link]</a></p>
-          </div>
-          ))
-        
-        }
+        {news &&
+          news.articles &&
+          news.articles.map(
+            (article, index) =>
+              index < 10 && (
+                <div className="py-1">
+                  <p className="font-bold "> {article.title}</p>
+                  <p>{article.description}</p>
+                  <p>
+                    <a className="text-accentone text-sm" href={article.url}>
+                      [link]
+                    </a>
+                  </p>
+                </div>
+              )
+          )}
       </div>
     </section>
   );
