@@ -23,14 +23,14 @@ function NewsSection({country}) {
   return (
     <section className="min-h-screen flex items-start justify-start bg-secondaryone text-primaryone">
       <div className="px-10 py-10">
-        <h1 className="float-animate text-accentone font-poiret font-bold text-3xl lg:text-5xl">
+        <h1 className="py-3 float-animate text-accentone font-poiret font-bold text-3xl lg:text-5xl">
           News in {country.toUpperCase()}
         </h1>
 
         <div className="px-0 py-3">
           <button
             onClick={handleGetNews}
-            className="w-full bg-primaryone text-gray-300 px-4 py-2 rounded-lg hover:bg-accentone"
+            className="w-full bg-primaryone text-textlight px-4 py-2 rounded-lg hover:bg-accentone"
           >
             Get news
           </button>

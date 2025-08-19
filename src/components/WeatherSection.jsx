@@ -40,15 +40,15 @@ function WeatherSection({setCountry}) {
   };
 
   return (
-    <section className="min-h-screen flex items-start justify-start bg-secondarytwo">
+    <section className="min-h-screen flex items-start justify-start bg-secondarytwo text-primarytwo">
       <div className="px-40 py-10 gap-16">
         <div className="text-left py-10">
-          <h1 className="float-animate text-accenttwo font-poiret font-bold text-3xl lg:text-5xl">
+          <h1 className="py-3 float-animate text-accenttwo font-poiret font-bold text-3xl lg:text-5xl">
             Weather
           </h1>
           {/* <form onSubmit={handleGetWeather}> */}
           <input
-            className="w-full px-0 py-3 bg-transparent text-primarytwo border-0 border-b-2 border-gray-300 focus:border-primarytwo focus:outline-none transition-colors"
+            className="w-full px-1 py-0 bg-transparent text-primarytwo border-0 border-b-2 border-primarytwo focus:border-primarytwo focus:outline-none transition-colors"
             type="text"
             placeholder="Enter city... eg. Kochi"
             value={city}
@@ -57,7 +57,7 @@ function WeatherSection({setCountry}) {
           <div className="px-0 py-3">
             <button
               onClick={handleGetWeather}
-              className="w-full bg-primarytwo text-gray-300 px-4 py-2 rounded-lg hover:bg-accenttwo"
+              className="w-full bg-primarytwo text-textlight px-4 py-2 rounded-lg hover:bg-accenttwo"
             >
               How is your day?
             </button>

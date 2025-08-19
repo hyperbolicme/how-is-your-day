@@ -34,7 +34,7 @@ function HeroSection() {
       className="font-merri min-h-[33vh] bg-secondaryhero px-0 py-0 
          text-primaryhero font-bold 
         text-9xl text-center justify-center flex items-baseline 
-        border-b-8 border-gray-300"
+        border-b-8 border-border"
     >
       <div>
         <div className="float-animate hero-text  ">HOW IS YOUR DAY?</div>
