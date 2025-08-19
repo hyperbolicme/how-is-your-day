@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 
-function NewsSection() {
-  // const [country, setCountry] = useState("");
-  let country = "us";
+function NewsSection({country}) {
+  console.log("News section country :", country)
   const [news, setNews] = useState(null);
 
   async function getNews(country) {
@@ -41,7 +40,7 @@ function NewsSection() {
           news.articles.map(
             (article, index) =>
               index < 10 && (
-                <div className="py-1">
+                <div className="py-1" id={index}>
                   <p className="font-bold "> {article.title}</p>
                   <p>{article.description}</p>
                   <p>

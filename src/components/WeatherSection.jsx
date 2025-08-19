@@ -1,25 +1,40 @@
 import { React, useState } from "react";
 
-function WeatherSection() {
+function WeatherSection({setCountry}) {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState(null);
   const [iconStr, setIconStr] = useState("");
 
+  console.log("setCountry :", setCountry);
   async function getWeather(city) {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
     const query = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
     console.log("query : ", query);
-    const res = await fetch(query);
 
-    const data = await res.json();
-    console.log("weather data: ", data);
-    setWeather(data);
-
-    setIconStr(`https://openweathermap.org/img/w/${data.weather[0].icon}.png`);
+    try{
+      const res = await fetch(query);
+      if(!res.ok) throw new Error("Weather API failed.")
+      const data = await res.json();
+      console.log("weather data: ", data);
+      
+      setWeather(data);
+      setCountry(data.sys.country);
+      console.log("country =", data.sys.country);
+      setIconStr(`https://openweathermap.org/img/w/${data.weather[0].icon}.png`);
+  
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+      // show error to user #bugfix
+    }
   }
 
   const handleGetWeather = () => {
+    if(!city.trim()) {
+      console.error("No city entered by user.");
+      // show error to user #bugfix
+      return;
+    }
     console.log("city = ", city);
     getWeather(city);
   };
