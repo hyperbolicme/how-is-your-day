@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import NewsEntry from "./NewsEntry";
 
-function NewsSection({country}) {
-  console.log("News section country :", country)
+function NewsSection({ country }) {
+  console.log("News section country :", country);
   const [news, setNews] = useState(null);
 
   async function getNews(country) {
@@ -40,15 +41,7 @@ function NewsSection({country}) {
           news.articles.map(
             (article, index) =>
               index < 10 && (
-                <div className="py-1" id={index}>
-                  <p className="font-bold "> {article.title}</p>
-                  <p>{article.description}</p>
-                  <p>
-                    <a className="text-accentone text-sm" href={article.url}>
-                      [link]
-                    </a>
-                  </p>
-                </div>
+                <NewsEntry article={article} index={index}></NewsEntry>
               )
           )}
       </div>
