@@ -1,9 +1,11 @@
 import { React, useState } from "react";
 import WeatherCard from "./WeatherCard";
+import ForecastSection from "./ForecastSection";
 
 function WeatherSection({ setCountry }) {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState(null);
+  const [forecast, setForecast] = useState(null);
   const [iconStr, setIconStr] = useState("");
 
   console.log("setCountry :", setCountry);
@@ -31,6 +33,25 @@ function WeatherSection({ setCountry }) {
     }
   }
 
+  async function getForecast(city) {
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+
+    const query = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
+    console.log("query : ", query);
+
+    try {
+      const res = await fetch(query);
+      if (!res.ok) throw new Error("Weather API failed.");
+      const data = await res.json();
+      console.log("forecast data: ", data);
+
+      setForecast(data);
+    } catch (error) {
+      console.error("Error fetching forecast:", error);
+      // show error to user #bugfix
+    }
+  }
+
   const handleGetWeather = () => {
     if (!city.trim()) {
       console.error("No city entered by user.");
@@ -41,6 +62,17 @@ function WeatherSection({ setCountry }) {
     getWeather(city);
   };
 
+  const handleGetForecast = () => {
+    if (!city.trim()) {
+      console.error("No city entered by user.");
+      // show error to user #bugfix
+      return;
+    }
+    console.log("city = ", city);
+    getForecast(city);
+  };
+
+  const today = new Date();
   return (
     <section className="min-h-screen flex items-start justify-start bg-secondarytwo text-primarytwo">
       <div className="px-40 py-10 gap-16">
@@ -56,18 +88,34 @@ function WeatherSection({ setCountry }) {
             value={city}
             onChange={(e) => setCity(e.target.value)}
           />
-          <div className="px-0 py-3">
+          <div className="px-0 py-3 grid grid-cols-1">
             <button
               onClick={handleGetWeather}
               className="w-full bg-primarytwo text-textlight px-4 py-2 rounded-lg hover:bg-accenttwo"
             >
               How is your day?
             </button>
+            <button
+              onClick={handleGetForecast}
+              className="w-full bg-primarytwo text-textlight px-4 py-2 rounded-lg hover:bg-accenttwo"
+            >
+              Forecast
+            </button>
           </div>
           {/* </form> */}
         </div>
         <div>
-          <WeatherCard weather={weather} iconStr={iconStr}></WeatherCard>
+          <WeatherCard
+            weather={weather}
+            iconStr={iconStr}
+            id={0}
+            city={weather && weather.name}
+            countryCode={weather && weather.sys.country}
+            date={today.toDateString()}
+          ></WeatherCard>
+        </div>
+        <div>
+          <ForecastSection forecast={forecast} />
         </div>
       </div>
     </section>
