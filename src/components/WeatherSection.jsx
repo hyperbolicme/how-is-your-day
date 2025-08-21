@@ -2,7 +2,7 @@ import { React, useState } from "react";
 import WeatherCard from "./WeatherCard";
 import ForecastSection from "./ForecastSection";
 
-function WeatherSection({ setCountry }) {
+function WeatherSection({ setCountry, setUserInput }) {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState(null);
   const [forecast, setForecast] = useState(null);
@@ -75,6 +75,7 @@ function WeatherSection({ setCountry }) {
   const handleGetDay = () => {
     handleGetWeather();
     handleGetForecast();
+    setUserInput(true);
  }
   const today = new Date();
   return (

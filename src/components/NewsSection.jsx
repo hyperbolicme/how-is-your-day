@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import NewsEntry from "./NewsEntry";
 
-function NewsSection({ country }) {
+function NewsSection({ country, userInput = false }) {
   console.log("News section country :", country);
   const [news, setNews] = useState(null);
 
@@ -21,6 +21,9 @@ function NewsSection({ country }) {
     getNews(country);
   };
 
+  if(userInput)
+    handleGetNews();
+
   return (
     <section className="min-h-screen flex items-start justify-start bg-secondaryone text-primaryone">
       <div className="px-10 py-10">
@@ -28,15 +31,15 @@ function NewsSection({ country }) {
           News in {country.toUpperCase()}
         </h1>
 
-        <div className="px-0 py-3">
+        {/* <div className="px-0 py-3">
           <button
             onClick={handleGetNews}
             className="w-full bg-primaryone text-textlight px-4 py-2 rounded-lg hover:bg-accentone"
           >
             Get news
           </button>
-        </div>
-        {news &&
+        </div> */}
+        { news &&
           news.articles &&
           news.articles.map(
             (article, index) =>
