@@ -15,7 +15,7 @@ function App() {
       <HeroSection />
       <div className=" min-h-screen font-mont">
         <WeatherSection setCountry={setCountry} setUserInput={setUserInput} />
-        <NewsSection country={country} userInput={userInput}/>
+        <NewsSection country={country} userInput={userInput} setUserInput={setUserInput}/>
       </div>
     </div>
   );

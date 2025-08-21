@@ -1,31 +1,46 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import NewsEntry from "./NewsEntry";
 
-function NewsSection({ country, userInput = false }) {
+function NewsSection({ country, userInput = false, setUserInput }) {
   console.log("News section country :", country);
   const [news, setNews] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   async function getNews(country) {
     const apiKey = import.meta.env.VITE_NEWS_API_KEY;
     const query = `https://newsapi.org/v2/top-headlines?country=${country}&apiKey=${apiKey}`;
 
-    const res = await fetch(query);
-    const data = await res.json();
+    setLoading(true);
+    setError(null);
 
-    console.log("api string: ", query);
-    console.log("news :", data);
-    setNews(data);
+    try {
+      const res = await fetch(query);
+      if (!res.ok) throw new Error("News API failed");
+      const data = await res.json();
+
+      console.log("api string: ", query);
+      console.log("news :", data);
+
+      setNews(data);
+      setUserInput(false);
+    } catch (error) {
+      console.error("Error fetching news: ", error);
+      setError("Failed to fetch news. Try again.");
+    } finally {
+      setLoading(false);
+    }
   }
   const handleGetNews = () => {
     console.log("country = ", country);
     getNews(country);
   };
-  let pullNews = userInput;
-  if(pullNews) {
-    handleGetNews();
-    pullNews = false;
-  }
-    
+
+  useEffect(() => {
+    if (userInput && country) {
+      handleGetNews();
+    }
+  }, [userInput, country]);
 
   return (
     <section className="min-h-screen flex items-start justify-start bg-secondaryone text-primaryone">
@@ -34,15 +49,7 @@ function NewsSection({ country, userInput = false }) {
           News in {country.toUpperCase()}
         </h1>
 
-        {/* <div className="px-0 py-3">
-          <button
-            onClick={handleGetNews}
-            className="w-full bg-primaryone text-textlight px-4 py-2 rounded-lg hover:bg-accentone"
-          >
-            Get news
-          </button>
-        </div> */}
-        { news &&
+        {news &&
           news.articles &&
           news.articles.map(
             (article, index) =>

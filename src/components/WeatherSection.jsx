@@ -7,15 +7,17 @@ function WeatherSection({ setCountry, setUserInput }) {
   const [weather, setWeather] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [iconStr, setIconStr] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   console.log("setCountry :", setCountry);
   async function getWeather(city) {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
-
     const query = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
     console.log("query : ", query);
 
     try {
+      setLoading(true);
       const res = await fetch(query);
       if (!res.ok) throw new Error("Weather API failed.");
       const data = await res.json();
@@ -23,13 +25,14 @@ function WeatherSection({ setCountry, setUserInput }) {
 
       setWeather(data);
       setCountry(data.sys.country);
-      console.log("country =", data.sys.country);
       setIconStr(
         `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
       );
     } catch (error) {
       console.error("Error fetching weather:", error);
       // show error to user #bugfix
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -52,32 +55,30 @@ function WeatherSection({ setCountry, setUserInput }) {
     }
   }
 
-  const handleGetWeather = () => {
+  const handleGetDay = async () => {
     if (!city.trim()) {
+      setError("Please enter city");
       console.error("No city entered by user.");
       // show error to user #bugfix
       return;
     }
-    console.log("city = ", city);
-    getWeather(city);
-  };
-
-  const handleGetForecast = () => {
-    if (!city.trim()) {
-      console.error("No city entered by user.");
-      // show error to user #bugfix
-      return;
+    
+    setError(null);
+    try {
+      await Promise.all([getWeather(city), getForecast(city)]);
+      // Only trigger News fetch after weather.
+      setUserInput(true);
+      // Reset timer for userinput flag
+      setTimeout(() => setUserInput(false), 100);
+    } catch (error) {
+      setError("Failed to fetch weather data. Try again.");
+    } finally {
+      setLoading(false);
     }
-    console.log("city = ", city);
-    getForecast(city);
   };
 
-  const handleGetDay = () => {
-    handleGetWeather();
-    handleGetForecast();
-    setUserInput(true);
- }
   const today = new Date();
+
   return (
     <section className="min-h-screen flex items-start justify-start bg-secondarytwo text-primarytwo">
       <div className="px-40 py-10 gap-16">
@@ -92,17 +93,23 @@ function WeatherSection({ setCountry, setUserInput }) {
             placeholder="Enter city... eg. Kochi"
             value={city}
             onChange={(e) => setCity(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleGetDay()}
           />
           <div className="px-0 py-3 ">
             <button
               onClick={handleGetDay}
               className=" bg-primarytwo text-textlight px-4 py-2 rounded-lg hover:bg-accenttwo"
+              disable={ loading || !city.trim()}
             >
-              How is your day?
+              {loading ? "Loading..." : "How is your day?"}              
             </button>
-           
           </div>
-          {/* </form> */}
+          {error && (
+            <div className="text-red-500 py-2 text-sm"> 
+              {error}
+            </div>
+          )}
+          
         </div>
         <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-5">
           <WeatherCard
