@@ -2,11 +2,11 @@ import React from "react";
 
 function NewsEntry({ article, index }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2">
-      <div>
+    <div className="grid grid-cols-5 ">
+      <div className="col-span-1 py-2">
         <img className="w-60" src={article.urlToImage}></img>
       </div>
-      <div className="" id={index}>
+      <div className="col-span-4 py-2" id={index}>
         <p className="font-bold "> {article.title}</p>
         <p className="text-sm">{article.description}</p>
         <p>
