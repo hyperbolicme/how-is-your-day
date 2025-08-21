@@ -72,6 +72,10 @@ function WeatherSection({ setCountry }) {
     getForecast(city);
   };
 
+  const handleGetDay = () => {
+    handleGetWeather();
+    handleGetForecast();
+ }
   const today = new Date();
   return (
     <section className="min-h-screen flex items-start justify-start bg-secondarytwo text-primarytwo">
@@ -82,29 +86,24 @@ function WeatherSection({ setCountry }) {
           </h1>
           {/* <form onSubmit={handleGetWeather}> */}
           <input
-            className="w-full px-1 py-0 bg-transparent text-primarytwo border-0 border-b-2 border-primarytwo focus:border-primarytwo focus:outline-none transition-colors"
+            className="px-1 py-0 bg-transparent text-primarytwo border-0 border-b-2 border-primarytwo focus:border-primarytwo focus:outline-none transition-colors"
             type="text"
             placeholder="Enter city... eg. Kochi"
             value={city}
             onChange={(e) => setCity(e.target.value)}
           />
-          <div className="px-0 py-3 grid grid-cols-1">
+          <div className="px-0 py-3 ">
             <button
-              onClick={handleGetWeather}
-              className="w-full bg-primarytwo text-textlight px-4 py-2 rounded-lg hover:bg-accenttwo"
+              onClick={handleGetDay}
+              className=" bg-primarytwo text-textlight px-4 py-2 rounded-lg hover:bg-accenttwo"
             >
               How is your day?
             </button>
-            <button
-              onClick={handleGetForecast}
-              className="w-full bg-primarytwo text-textlight px-4 py-2 rounded-lg hover:bg-accenttwo"
-            >
-              Forecast
-            </button>
+           
           </div>
           {/* </form> */}
         </div>
-        <div>
+        <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-5">
           <WeatherCard
             weather={weather}
             iconStr={iconStr}

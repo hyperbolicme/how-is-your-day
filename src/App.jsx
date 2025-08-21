@@ -12,7 +12,7 @@ function App() {
   return (
     <div className='font-mont'>
       <HeroSection />
-      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen font-mont">
+      <div className=" min-h-screen font-mont">
         <WeatherSection setCountry={setCountry} />
         <NewsSection country={country}/>
       </div>
