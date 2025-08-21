@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import NewsEntry from "./NewsEntry";
 
+const MAX_ARTICLES = 10;
+
 function NewsSection({ country, userInput = false, setUserInput }) {
   console.log("News section country :", country);
   const [news, setNews] = useState(null);
@@ -53,7 +55,7 @@ function NewsSection({ country, userInput = false, setUserInput }) {
           news.articles &&
           news.articles.map(
             (article, index) =>
-              index < 10 && (
+              index < MAX_ARTICLES && (
                 <NewsEntry article={article} index={index}></NewsEntry>
               )
           )}

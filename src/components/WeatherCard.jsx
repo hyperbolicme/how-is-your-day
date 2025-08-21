@@ -26,8 +26,8 @@ function WeatherCard({ weather, iconStr, id, city, countryCode, date }) {
 
           <p>Feels like {Math.round(weather.main.feels_like)}°C</p>
           <p className="text-lg ">
-            {weather.weather[0].description.charAt(0).toUpperCase() +
-              weather.weather[0].description.slice(1)}
+            {weather.weather[0]?.description?.charAt(0).toUpperCase() +
+              weather.weather[0]?.description?.slice(1)}
           </p>
           <p className="">Humidity: {weather.main.humidity}%</p>
           <p className="">Wind: {weather.wind.speed}m/s</p>
