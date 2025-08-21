@@ -25,7 +25,7 @@ function WeatherSection({ setCountry, setUserInput }) {
       setCountry(data.sys.country);
       console.log("country =", data.sys.country);
       setIconStr(
-        `https://openweathermap.org/img/w/${data.weather[0].icon}.png`
+        `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
       );
     } catch (error) {
       console.error("Error fetching weather:", error);

@@ -14,7 +14,7 @@ function WeatherCard({ weather, iconStr, id, city, countryCode, date }) {
               day: "2-digit",
             })}
           </p>
-          <div className="text-s grid grid-cols-1 lg:grid-cols-2">
+          <div className="text-xs grid grid-cols-1 lg:grid-cols-2">
             <p>Min: {Math.round(weather.main.temp_min)}°C</p>
             <p>Max: {Math.round(weather.main.temp_max)}°C</p>
           </div>
@@ -25,7 +25,7 @@ function WeatherCard({ weather, iconStr, id, city, countryCode, date }) {
           </p>
 
           <p>Feels like {Math.round(weather.main.feels_like)}°C</p>
-          <p>
+          <p className="text-lg ">
             {weather.weather[0].description.charAt(0).toUpperCase() +
               weather.weather[0].description.slice(1)}
           </p>

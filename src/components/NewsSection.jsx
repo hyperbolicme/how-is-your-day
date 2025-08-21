@@ -20,9 +20,12 @@ function NewsSection({ country, userInput = false }) {
     console.log("country = ", country);
     getNews(country);
   };
-
-  if(userInput)
+  let pullNews = userInput;
+  if(pullNews) {
     handleGetNews();
+    pullNews = false;
+  }
+    
 
   return (
     <section className="min-h-screen flex items-start justify-start bg-secondaryone text-primaryone">

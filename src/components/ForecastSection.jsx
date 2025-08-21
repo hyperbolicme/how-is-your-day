@@ -17,7 +17,7 @@ function ForecastSection({ forecast }) {
           <div className="py-3 px-1">
             <WeatherCard
               weather={weather}
-              iconStr={`https://openweathermap.org/img/w/${weather.weather[0].icon}.png`}
+              iconStr={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`}
               id={index}
               city={forecast.city.name}
               countryCode={forecast.city.country}
