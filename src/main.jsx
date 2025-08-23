@@ -6,7 +6,7 @@ import WeatherNewsApp from './WeatherNewsApp.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
-    {/* <WeatherNewsApp/> */}
+    {/* <App /> */}
+    <WeatherNewsApp/>
   </StrictMode>,
 )
