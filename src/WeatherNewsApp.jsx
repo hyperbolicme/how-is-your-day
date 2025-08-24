@@ -1,19 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Search, Sun, Cloud, CloudRain, Wind, Eye, Droplets, MapPin, Calendar, Clock, TrendingUp, Sunrise, Sunset } from 'lucide-react';
 
+const DEFAULT_CITY = "Kochi";
+const DEFAULT_COUNTRY = "IN";
+const MAX_ARTICLES = 10;
+
 const WeatherNewsApp = () => {
   const [city, setCity] = useState('');
-  const [currentCity, setCurrentCity] = useState('Kochi');
+  const [currentCity, setCurrentCity] = useState(DEFAULT_CITY);
   const [isLoading, setIsLoading] = useState(false);
   const [weather, setWeather] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [forecastList, setForecastList] = useState(null);
-  const [iconStr, setIconStr] = useState("");
-  const [country, setCountry] = useState("");
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [news, setNews] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const MAX_ARTICLES = 10;
 
   const handleSearch = async (e) => {
     console.log("handleSearch")
@@ -36,10 +38,10 @@ const WeatherNewsApp = () => {
   async function getWeather(city) {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
     const query = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
-    console.log("query : ", query);
+    console.log("query : WeatherAPI");
 
     try {
-      setIsLoading(true);
+      // setIsLoading(true);
       const res = await fetch(query);
       if (!res.ok) throw new Error("Weather API failed.");
       const data = await res.json();
@@ -47,22 +49,18 @@ const WeatherNewsApp = () => {
 
       setWeather(data);
       setCountry(data.sys.country);
-      setIconStr(
-        `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
-      );
-      console.log(`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`);
     } catch (error) {
       console.error("Error fetching weather:", error);
       // show error to user #bugfix
     } finally {
-      setIsLoading(false);
+      // setIsLoading(false);
     }
   };
 
   async function getForecast(city) {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
     const query = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
-    console.log("query : ", query);
+    console.log("query : ForecastAPI");
 
     try {
       const res = await fetch(query);
@@ -136,7 +134,7 @@ const WeatherNewsApp = () => {
       if (!res.ok) throw new Error("News API failed");
       const data = await res.json();
 
-      console.log("api string: ", query);
+      console.log("api string: NewsAPI");
       console.log("news :", data);
 
       setNews(data);
@@ -150,11 +148,22 @@ const WeatherNewsApp = () => {
   };
 
   useEffect(() => {
+    if (isLoading) return; // 
+    setIsLoading(true);
+
+    console.log("currentCity changed to :", currentCity);
     getWeather(currentCity);
     getForecast(currentCity);
+    setIsLoading(false);
+  }, [currentCity]); 
+
+  useEffect(() => {
+    if (isLoading) return; //
+    setIsLoading(true); 
+    console.log("country changed to :", country);
     getNews(country);
-    
-  }, [currentCity, country]); 
+    setIsLoading(false)
+  }, [country]);
 
   useEffect(() => {
     if(!forecast) return;
@@ -233,7 +242,8 @@ const WeatherNewsApp = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-6">
                     
-                    <img src={iconStr} alt="weather icon"></img>
+                    
+                    {weather?.weather[0]?.icon ? (<img src={`https://openweathermap.org/img/wn/${weather?.weather[0]?.icon}@2x.png`} alt="weather icon"></img>) : <></>}
                     <div>
                       <div className="text-5xl font-bold" style={{color: '#F9FAFB'}}>
                         <p className="">
@@ -286,7 +296,8 @@ const WeatherNewsApp = () => {
                     <div key={index} className="text-center rounded-xl p-4 hover:bg-opacity-20 transition-colors" style={{backgroundColor: 'rgba(167, 205, 201, 0.05)'}}>
                       <div className="text-sm font-medium mb-3" style={{color: '#A7CDC9'}}>{getDayOfWeek(dayweather.dt_txt)}</div>
                       <div className="flex justify-center mb-3">
-                        {<img src={`https://openweathermap.org/img/wn/${dayweather?.weather[0]?.icon}@2x.png`}></img>}
+                        {dayweather?.weather[0]?.icon ? (<img src={`https://openweathermap.org/img/wn/${dayweather?.weather[0]?.icon}@2x.png`}></img>) : <div></div> }
+                        
                       </div>
                       <div className="space-y-1">
                         <div className="font-semibold" style={{color: '#F9FAFB'}}>{Math.round(dayweather?.main?.temp)}°C</div>
@@ -307,7 +318,7 @@ const WeatherNewsApp = () => {
                   <h3 className="text-xl font-semibold" style={{color: '#F9FAFB'}}>Today's Top News</h3>
                 </div>
                 <div className="space-y-6">
-                  {news?.articles.map((article, index) => (
+                  {news?.articles?.map((article, index) => (
                     (index < MAX_ARTICLES) &&
                     <div key={index} className="group cursor-pointer">
                       <div className="aspect-video rounded-xl overflow-hidden mb-3 group-hover:bg-opacity-20 transition-colors" style={{backgroundColor: 'rgba(167, 190, 205, 0.05)'}}>
