@@ -4,6 +4,13 @@ import { Search, Sun, Cloud, CloudRain, Wind, Eye, Droplets, MapPin, Calendar, C
 const DEFAULT_CITY = "Kochi";
 const DEFAULT_COUNTRY = "IN";
 const MAX_ARTICLES = 10;
+const DAY_OF_WEEK = [ "Sunday",
+                      "Monday",
+                      "Tuesday",
+                      "Wednesday",
+                      "Thursday",
+                      "Friday",
+                      "Saturday"];
 
 const WeatherNewsApp = () => {
   const [city, setCity] = useState('');
@@ -18,30 +25,21 @@ const WeatherNewsApp = () => {
   const [error, setError] = useState(null);
 
   const handleSearch = async (e) => {
-    console.log("handleSearch")
+    console.log("handleSearch city :", city)
     e.preventDefault();
     if (city.trim()) {
-      setIsLoading(true);
-      
-      setCurrentCity(city);
-      try { 
-        await Promise.all([getWeather(currentCity), getForecast(currentCity), getNews(country)]);           
-      } catch(error) {
-        console.error("Error getting weather :", error)
-      } finally {
-        setCity('');
-        setIsLoading(false);
-      }
+      setIsLoading(true);      
+      setCurrentCity(city); // this will trigger getweather&getforecast and if needed getnews      
+      setCity('');
     }
   };
 
   async function getWeather(city) {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
     const query = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
-    console.log("query : WeatherAPI");
+    console.log("query : WeatherAPI. ");
 
     try {
-      // setIsLoading(true);
       const res = await fetch(query);
       if (!res.ok) throw new Error("Weather API failed.");
       const data = await res.json();
@@ -52,15 +50,13 @@ const WeatherNewsApp = () => {
     } catch (error) {
       console.error("Error fetching weather:", error);
       // show error to user #bugfix
-    } finally {
-      // setIsLoading(false);
-    }
+    } 
   };
 
   async function getForecast(city) {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
     const query = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
-    console.log("query : ForecastAPI");
+    console.log("query : ForecastAPI. ", query);
 
     try {
       const res = await fetch(query);
@@ -71,7 +67,6 @@ const WeatherNewsApp = () => {
       setForecast(data);
     } catch (error) {
       console.error("Error fetching forecast:", error);
-      // show error to user #bugfix
     }
   };
 
@@ -95,7 +90,6 @@ const WeatherNewsApp = () => {
   const getLocalTime = (unixtime) => {
     const d = new Date(unixtime*1000);
     const formattedString = `${d.getHours()}:${d.getMinutes()}`;
-
     return formattedString;
   };
 
@@ -110,15 +104,7 @@ const WeatherNewsApp = () => {
     } else if(diffDays == 1){
       return "Tomorrow";
     } else if(diffDays > 1) {
-      switch(givenDay.getDay()) {
-        case 0: return("Sunday");
-        case 1: return("Monday");
-        case 2: return("Tuesday");
-        case 3: return("Wednesday");
-        case 4: return("Thursday");
-        case 5: return("Friday");
-        case 6: return("Saturday");
-      }
+      return(DAY_OF_WEEK[givenDay.getDay()]);
     }
   };
 
@@ -126,7 +112,6 @@ const WeatherNewsApp = () => {
     const apiKey = import.meta.env.VITE_NEWS_API_KEY;
     const query = `https://newsapi.org/v2/top-headlines?country=${country}&apiKey=${apiKey}`;
 
-    setLoading(true);
     setError(null);
 
     try {
@@ -134,7 +119,7 @@ const WeatherNewsApp = () => {
       if (!res.ok) throw new Error("News API failed");
       const data = await res.json();
 
-      console.log("api string: NewsAPI");
+      console.log("Query: NewsAPI ", query);
       console.log("news :", data);
 
       setNews(data);
@@ -143,12 +128,10 @@ const WeatherNewsApp = () => {
       console.error("Error fetching news: ", error);
       setError("Failed to fetch news. Try again.");
     } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (isLoading) return; // 
     setIsLoading(true);
 
     console.log("currentCity changed to :", currentCity);
@@ -158,7 +141,7 @@ const WeatherNewsApp = () => {
   }, [currentCity]); 
 
   useEffect(() => {
-    if (isLoading) return; //
+
     setIsLoading(true); 
     console.log("country changed to :", country);
     getNews(country);
