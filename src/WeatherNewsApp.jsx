@@ -67,7 +67,7 @@ const WeatherNewsApp = () => {
   async function getForecast(city) {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
     const query = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
-    console.log("query : ForecastAPI. ", query);
+    console.log("query : ForecastAPI. ");
 
     try {
       const res = await fetch(query);
@@ -130,7 +130,7 @@ const WeatherNewsApp = () => {
       if (!res.ok) throw new Error("News API failed");
       const data = await res.json();
 
-      console.log("Query: NewsAPI ", query);
+      console.log("Query: NewsAPI ");
       console.log("news :", data);
 
       setNews(data);
