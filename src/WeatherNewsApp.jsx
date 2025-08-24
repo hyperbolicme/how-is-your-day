@@ -15,134 +15,67 @@ const WeatherNewsApp = () => {
   const [error, setError] = useState(null);
   const MAX_ARTICLES = 10;
 
-  // Mock weather data
-  const mockWeatherData = {
-    current: {
-      temp: 72,
-      condition: 'Partly Cloudy',
-      icon: 'partly-cloudy',
-      humidity: 65,
-      windSpeed: 8,
-      visibility: 10,
-      feelsLike: 76
-    },
-    forecast: [
-      { day: 'Today', high: 75, low: 62, condition: 'Partly Cloudy', icon: 'partly-cloudy', precipitation: 10 },
-      { day: 'Tomorrow', high: 78, low: 64, condition: 'Sunny', icon: 'sunny', precipitation: 5 },
-      { day: 'Wednesday', high: 73, low: 59, condition: 'Rainy', icon: 'rainy', precipitation: 80 },
-      { day: 'Thursday', high: 71, low: 57, condition: 'Cloudy', icon: 'cloudy', precipitation: 20 },
-      { day: 'Friday', high: 76, low: 61, condition: 'Sunny', icon: 'sunny', precipitation: 0 }
-    ]
-  };
-
-  // Mock news data
-  const mockNewsData = [
-    {
-      headline: "Tech Giants Announce Major AI Breakthrough",
-      blurb: "Leading technology companies reveal collaborative research that could revolutionize artificial intelligence applications across industries.",
-      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop",
-      time: "2 hours ago"
-    },
-    {
-      headline: "Climate Summit Reaches Historic Agreement",
-      blurb: "World leaders commit to ambitious new targets for carbon neutrality, marking a significant step in global climate action.",
-      image: "https://images.unsplash.com/photo-1569163139394-de4e4f43e4e3?w=400&h=250&fit=crop",
-      time: "4 hours ago"
-    },
-    {
-      headline: "Space Exploration Milestone Achieved",
-      blurb: "International space agencies successfully complete groundbreaking mission that opens new possibilities for deep space research.",
-      image: "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=400&h=250&fit=crop",
-      time: "6 hours ago"
-    }
-  ];
-
-  const getWeatherIcon = (iconType) => {
-    switch (iconType) {
-      case 'sunny': return <Sun className="w-8 h-8" style={{color: '#86BBB5'}} />;
-      case 'partly-cloudy': return <Cloud className="w-8 h-8" style={{color: '#A7CDC9'}} />;
-      case 'cloudy': return <Cloud className="w-8 h-8" style={{color: '#86A6BB'}} />;
-      case 'rainy': return <CloudRain className="w-8 h-8" style={{color: '#49799C'}} />;
-      default: return <Sun className="w-8 h-8" style={{color: '#86BBB5'}} />;
-    }
-  };
-
-  
-
-    const handleSearch = async (e) => {
-      console.log("handleSearch")
-      e.preventDefault();
-      if (city.trim()) {
-        setIsLoading(true);
-        
-        setCurrentCity(city);
-        try { 
-          await Promise.all([getWeather(currentCity), getForecast(currentCity)]);           
-        } catch(error) {
-          console.error("Error getting weather :", error)
-        } finally {
-          setCity('');
-          setIsLoading(false);
-        }
-      }
-    };
-
-    async function getWeather(city) {
-      const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
-      const query = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
-      console.log("query : ", query);
-  
-      try {
-        setIsLoading(true);
-        const res = await fetch(query);
-        if (!res.ok) throw new Error("Weather API failed.");
-        const data = await res.json();
-        console.log("weather data: ", data);
-  
-        setWeather(data);
-        setCountry(data.sys.country);
-        setIconStr(
-          `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
-        );
-        console.log(`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`);
-      } catch (error) {
-        console.error("Error fetching weather:", error);
-        // show error to user #bugfix
+  const handleSearch = async (e) => {
+    console.log("handleSearch")
+    e.preventDefault();
+    if (city.trim()) {
+      setIsLoading(true);
+      
+      setCurrentCity(city);
+      try { 
+        await Promise.all([getWeather(currentCity), getForecast(currentCity), getNews(country)]);           
+      } catch(error) {
+        console.error("Error getting weather :", error)
       } finally {
+        setCity('');
         setIsLoading(false);
       }
     }
+  };
 
-    async function getForecast(city) {
-      const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
-  
-      const query = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
-      console.log("query : ", query);
-  
-      try {
-        const res = await fetch(query);
-        if (!res.ok) throw new Error("Forecast API failed.");
-        const data = await res.json();
-        console.log("forecast data: ", data);
-  
-        setForecast(data);
-      } catch (error) {
-        console.error("Error fetching forecast:", error);
-        // show error to user #bugfix
-      }
+  async function getWeather(city) {
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+    const query = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+    console.log("query : ", query);
+
+    try {
+      setIsLoading(true);
+      const res = await fetch(query);
+      if (!res.ok) throw new Error("Weather API failed.");
+      const data = await res.json();
+      console.log("weather data: ", data);
+
+      setWeather(data);
+      setCountry(data.sys.country);
+      setIconStr(
+        `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
+      );
+      console.log(`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`);
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+      // show error to user #bugfix
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    useEffect(() => {
-      getWeather(currentCity);
-      getForecast(currentCity);
-      getNews(country);
-    }, [currentCity, country]); 
+  async function getForecast(city) {
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+    const query = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
+    console.log("query : ", query);
 
-    useEffect(() => {
-      if(!forecast) return;
-      setForecastList(forecast.list.filter((item) => item.dt_txt.includes("12:00:00")));
-    }, [forecast]);
-  
+    try {
+      const res = await fetch(query);
+      if (!res.ok) throw new Error("Forecast API failed.");
+      const data = await res.json();
+      console.log("forecast data: ", data);
+
+      setForecast(data);
+    } catch (error) {
+      console.error("Error fetching forecast:", error);
+      // show error to user #bugfix
+    }
+  };
 
   const getCurrentTime = () => {
     return new Date().toLocaleTimeString('en-US', { 
@@ -189,7 +122,7 @@ const WeatherNewsApp = () => {
         case 6: return("Saturday");
       }
     }
-  }
+  };
 
   async function getNews(country) {
     const apiKey = import.meta.env.VITE_NEWS_API_KEY;
@@ -214,8 +147,19 @@ const WeatherNewsApp = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
+  useEffect(() => {
+    getWeather(currentCity);
+    getForecast(currentCity);
+    getNews(country);
+    
+  }, [currentCity, country]); 
+
+  useEffect(() => {
+    if(!forecast) return;
+    setForecastList(forecast.list.filter((item) => item.dt_txt.includes("12:00:00")));
+  }, [forecast]);
 
   return (
     <div className="min-h-screen font-mont" style={{background: 'linear-gradient(135deg, #1A4D47 0%, #2D5F5A 35%, #1A3A52 70%, #2D4A5F 100%)'}}>
