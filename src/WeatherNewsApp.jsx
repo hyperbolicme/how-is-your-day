@@ -33,6 +33,7 @@ const WeatherNewsApp = () => {
   const [forecastList, setForecastList] = useState(null);
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [news, setNews] = useState(null);
+  const [newsG, setNewsG] = useState(null);
   const [error, setError] = useState(null);
 
   const handleSearch = async (e) => {
@@ -60,7 +61,9 @@ const WeatherNewsApp = () => {
       setCountry(data.sys.country);
     } catch (error) {
       console.error("Error fetching weather:", error);
-      // show error to user #bugfix
+      setWeather(null);
+      setCurrentCity(DEFAULT_CITY);
+      setCountry(DEFAULT_COUNTRY);
     }
   }
 
@@ -78,6 +81,7 @@ const WeatherNewsApp = () => {
       setForecast(data);
     } catch (error) {
       console.error("Error fetching forecast:", error);
+      setForecast(null)
     }
   }
 
@@ -138,8 +142,34 @@ const WeatherNewsApp = () => {
     } catch (error) {
       console.error("Error fetching news: ", error);
       setError("Failed to fetch news. Try again.");
+      setNews(null);
     } finally {
     }
+  }
+
+  async function getNewsGuardian(countryCode) {
+    const apiKey = import.meta.env.VITE_NEWS_GUARDIAN_API_KEY;
+    const regionNames = new Intl.DisplayNames(['en'], {type: 'region'});
+    const query = `https://content.guardianapis.com/search?q=top%20news%20${regionNames.of(countryCode)}&api-key=${apiKey}&show-fields=thumbnail&order-by=newest`;
+
+    try {
+      const res = await fetch(query);
+      if (!res.ok) throw new Error("News Guardian API failed");
+      const data = await res.json();
+      if (data.response.status != 'ok') throw new Error("Guardian API failed");
+
+      console.log("Query: Guardian NewsAPI ");
+      console.log("g news :", data);
+
+      setNewsG(data.response.results);
+      // setNews(data);
+    } catch (error) {
+      console.error("Error fetching news: ", error);
+      setError("Failed to fetch news. Try again.");
+      setNews(null);
+    } finally {
+    }
+
   }
 
   useEffect(() => {
@@ -154,7 +184,7 @@ const WeatherNewsApp = () => {
   useEffect(() => {
     setIsLoading(true);
     console.log("country changed to :", country);
-    getNews(country);
+    getNewsGuardian(country);
     setIsLoading(false);
   }, [country]);
 
@@ -468,10 +498,11 @@ const WeatherNewsApp = () => {
                   </h3>
                 </div>
                 <div className="space-y-6">
-                  {news?.articles?.map(
+                  {/* {news?.articles?.map( */}
+                  {newsG?.map(
                     (article, index) =>
                       index < MAX_ARTICLES && (
-                        <div key={index} className="group cursor-pointer">
+                        <div key={article.id} className="group cursor-pointer">
                           <div
                             className="aspect-video rounded-xl overflow-hidden mb-3 group-hover:bg-opacity-20 transition-colors"
                             style={{
@@ -479,9 +510,9 @@ const WeatherNewsApp = () => {
                             }}
                           >
                             <img
-                              alt={article?.title}
+                              // alt={article?.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              src={article?.urlToImage}
+                              src={article?.fields.thumbnail}
                             />
                           </div>
                           <div className="space-y-2">
@@ -489,15 +520,13 @@ const WeatherNewsApp = () => {
                               className="font-semibold leading-snug group-hover:opacity-80 transition-colors"
                               style={{ color: "#F9FAFB" }}
                             >
-                              {article?.title}
+                              {article?.webTitle}
                             </h4>
-                            <p
-                              className="text-sm leading-relaxed"
-                              style={{ color: "rgba(167, 190, 205, 0.8)" }}
-                            >
-                              {article?.description}
-                            </p>
-                            {/* <div className="text-xs" style={{color: 'rgba(167, 190, 205, 0.6)'}}>{article.time}</div> */}
+                            
+                            <div className="text-xs" style={{color: 'rgba(167, 190, 205, 0.6)'}}> 
+                              {new Date(article.webPublicationDate).toLocaleDateString()}
+                              <a href={article.webUrl}> Read More</a>
+                            </div>
                           </div>
                           {index < MAX_ARTICLES - 1 && (
                             <div
