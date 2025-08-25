@@ -23,6 +23,8 @@ const DAY_OF_WEEK = [
   "Friday",
   "Saturday",
 ];
+const HERO_TITLE = "How is your day?";
+const HERO_SUBTITLE = "Weather insights and top stories for your city";
 
 const WeatherNewsApp = () => {
   const [city, setCity] = useState("");
@@ -32,9 +34,80 @@ const WeatherNewsApp = () => {
   const [forecast, setForecast] = useState(null);
   const [forecastList, setForecastList] = useState(null);
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
-  const [news, setNews] = useState(null);
+  // const [news, setNews] = useState(null);
   const [newsG, setNewsG] = useState(null);
   const [error, setError] = useState(null);
+
+  function getWeatherIconImg() {
+    return weather?.weather[0]?.icon ? (
+      <img
+        src={`https://openweathermap.org/img/wn/${weather?.weather[0]?.icon}@2x.png`}
+        alt="weather icon"
+      ></img>
+    ) : (
+      <></>
+    );
+  }
+
+  function getWeatherDescription() {
+    weather?.weather[0]?.description?.charAt(0).toUpperCase() +
+      weather?.weather[0]?.description?.slice(1);
+  }
+
+  function getFeelsLikeTemperature() {
+    return Math.round(weather?.main?.feels_like);
+  }
+
+  function getHumidity() {
+    return weather?.main?.humidity;
+  }
+
+  function getWindspeed() {
+    return weather?.wind?.speed;
+  }
+
+  function getSunrise() {
+    return getLocalTime(weather?.sys?.sunrise);
+  }
+
+  function getSunset() {
+    return getLocalTime(weather?.sys?.sunset);
+  }
+
+  function getForecastWeathers() {
+    if (!forecastList) return;
+    let forecastWeathers = [];
+
+    forecastList?.map((dayweather) => {
+      let w = {};
+      w.day = getDayOfWeek(dayweather.dt_txt);
+      w.iconsrc = `https://openweathermap.org/img/wn/${dayweather?.weather[0]?.icon}@2x.png`;
+      w.temp = Math.round(dayweather?.main?.temp);
+      w.humidity = dayweather?.main?.humidity;
+      w.windspeed = dayweather?.wind?.speed;
+      forecastWeathers.push(w);
+    });
+
+    return forecastWeathers;
+  }
+
+  function getNewsArticles() {
+    if (!newsG) return null;
+    let newsArticles = [];
+    const topNews = newsG.slice(0, MAX_ARTICLES);
+
+    topNews?.map((article) => {
+      let n = {};
+      n.id = article.id;
+      n.imgsrc = article.fields?.thumbnail;
+      n.title = article.webTitle;
+      n.published = new Date(article.webPublicationDate).toLocaleDateString();
+      n.url = article.webUrl;
+
+      newsArticles.push(n);
+    });
+    return newsArticles;
+  }
 
   const handleSearch = async (e) => {
     console.log("handleSearch city :", city);
@@ -81,7 +154,7 @@ const WeatherNewsApp = () => {
       setForecast(data);
     } catch (error) {
       console.error("Error fetching forecast:", error);
-      setForecast(null)
+      setForecast(null);
     }
   }
 
@@ -149,14 +222,16 @@ const WeatherNewsApp = () => {
 
   async function getNewsGuardian(countryCode) {
     const apiKey = import.meta.env.VITE_NEWS_GUARDIAN_API_KEY;
-    const regionNames = new Intl.DisplayNames(['en'], {type: 'region'});
-    const query = `https://content.guardianapis.com/search?q=top%20news%20${regionNames.of(countryCode)}&api-key=${apiKey}&show-fields=thumbnail&order-by=newest`;
+    const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+    const query = `https://content.guardianapis.com/search?q=${regionNames.of(
+      countryCode
+    )}&api-key=${apiKey}&show-fields=thumbnail&order-by=relevance`;
 
     try {
       const res = await fetch(query);
       if (!res.ok) throw new Error("News Guardian API failed");
       const data = await res.json();
-      if (data.response.status != 'ok') throw new Error("Guardian API failed");
+      if (data.response.status != "ok") throw new Error("Guardian API failed");
 
       console.log("Query: Guardian NewsAPI ");
       console.log("g news :", data);
@@ -166,10 +241,9 @@ const WeatherNewsApp = () => {
     } catch (error) {
       console.error("Error fetching news: ", error);
       setError("Failed to fetch news. Try again.");
-      setNews(null);
+      setNewsG(null);
     } finally {
     }
-
   }
 
   useEffect(() => {
@@ -194,6 +268,14 @@ const WeatherNewsApp = () => {
       forecast.list.filter((item) => item.dt_txt.includes("12:00:00"))
     );
   }, [forecast]);
+
+  useEffect(() => {
+    console.log("forecast weathers :", getForecastWeathers());
+  }, [forecastList]);
+
+  useEffect(() => {
+    console.log("news articles :", getNewsArticles());
+  }, [newsG]);
 
   return (
     <div
@@ -222,10 +304,10 @@ const WeatherNewsApp = () => {
               backgroundClip: "text",
             }}
           >
-            How is your day?
+            {HERO_TITLE}
           </h1>
           <p className="text-lg" style={{ color: "#A7CDC9" }}>
-            Weather insights and top stories for your city
+            {HERO_SUBTITLE}
           </p>
         </div>
 
@@ -307,14 +389,7 @@ const WeatherNewsApp = () => {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-6">
-                    {weather?.weather[0]?.icon ? (
-                      <img
-                        src={`https://openweathermap.org/img/wn/${weather?.weather[0]?.icon}@2x.png`}
-                        alt="weather icon"
-                      ></img>
-                    ) : (
-                      <></>
-                    )}
+                    {getWeatherIconImg()}
                     <div>
                       <div
                         className="text-5xl font-bold"
@@ -323,16 +398,13 @@ const WeatherNewsApp = () => {
                         <p className="">{Math.round(weather?.main?.temp)}°C</p>
                       </div>
                       <div style={{ color: "#A7CDC9" }}>
-                        {weather?.weather[0]?.description
-                          ?.charAt(0)
-                          .toUpperCase() +
-                          weather?.weather[0]?.description?.slice(1)}
+                        {getWeatherDescription()}
                       </div>
                       <div
                         className="text-sm"
                         style={{ color: "rgba(167, 205, 201, 0.7)" }}
                       >
-                        Feels like {Math.round(weather?.main?.feels_like)}°C
+                        Feels like {getFeelsLikeTemperature()}°C
                       </div>
                     </div>
                   </div>
@@ -347,7 +419,7 @@ const WeatherNewsApp = () => {
                         style={{ color: "#86A6BB" }}
                       />
                       <div className="text-sm" style={{ color: "#F9FAFB" }}>
-                        {weather?.main?.humidity}%
+                        {getHumidity()}%
                       </div>
                       <div
                         className="text-xs"
@@ -365,7 +437,7 @@ const WeatherNewsApp = () => {
                         style={{ color: "#86BBB5" }}
                       />
                       <div className="text-sm" style={{ color: "#F9FAFB" }}>
-                        {weather?.wind?.speed} m/s
+                        {getWindspeed()} m/s
                       </div>
                       <div
                         className="text-xs"
@@ -383,7 +455,7 @@ const WeatherNewsApp = () => {
                         style={{ color: "#A7BECD" }}
                       />
                       <div className="text-sm" style={{ color: "#F9FAFB" }}>
-                        {getLocalTime(weather?.sys?.sunrise)}
+                        {getSunrise()}
                       </div>
                       <div
                         className="text-xs"
@@ -401,7 +473,7 @@ const WeatherNewsApp = () => {
                         style={{ color: "#A7BECD" }}
                       />
                       <div className="text-sm" style={{ color: "#F9FAFB" }}>
-                        {getLocalTime(weather?.sys?.sunset)}
+                        {getSunset()}
                       </div>
                       <div
                         className="text-xs"
@@ -432,7 +504,7 @@ const WeatherNewsApp = () => {
                   </h3>
                 </div>
                 <div className="grid grid-cols-5 gap-4">
-                  {forecastList?.map((dayweather, index) => (
+                  {getForecastWeathers()?.map((dayweather, index) => (
                     <div
                       key={index}
                       className="text-center rounded-xl p-4 hover:bg-opacity-20 transition-colors"
@@ -442,13 +514,11 @@ const WeatherNewsApp = () => {
                         className="text-sm font-medium mb-3"
                         style={{ color: "#A7CDC9" }}
                       >
-                        {getDayOfWeek(dayweather.dt_txt)}
+                        {dayweather.day}
                       </div>
                       <div className="flex justify-center mb-3">
-                        {dayweather?.weather[0]?.icon ? (
-                          <img
-                            src={`https://openweathermap.org/img/wn/${dayweather?.weather[0]?.icon}@2x.png`}
-                          ></img>
+                        {dayweather.iconsrc ? (
+                          <img src={dayweather.iconsrc}></img>
                         ) : (
                           <div></div>
                         )}
@@ -458,16 +528,16 @@ const WeatherNewsApp = () => {
                           className="font-semibold"
                           style={{ color: "#F9FAFB" }}
                         >
-                          {Math.round(dayweather?.main?.temp)}°C
+                          {dayweather.temp}°C
                         </div>
                         <div
                           className="text-sm"
                           style={{ color: "rgba(167, 205, 201, 0.7)" }}
                         >
-                          {dayweather?.main?.humidity}%
+                          {dayweather.humidity}%
                         </div>
                         <div className="text-xs" style={{ color: "#86A6BB" }}>
-                          {dayweather?.wind?.speed} m/s
+                          {dayweather.windspeed} m/s
                         </div>
                       </div>
                     </div>
@@ -498,47 +568,46 @@ const WeatherNewsApp = () => {
                   </h3>
                 </div>
                 <div className="space-y-6">
-                  {/* {news?.articles?.map( */}
-                  {newsG?.map(
-                    (article, index) =>
-                      index < MAX_ARTICLES && (
-                        <div key={article.id} className="group cursor-pointer">
-                          <div
-                            className="aspect-video rounded-xl overflow-hidden mb-3 group-hover:bg-opacity-20 transition-colors"
-                            style={{
-                              backgroundColor: "rgba(167, 190, 205, 0.05)",
-                            }}
-                          >
-                            <img
-                              // alt={article?.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              src={article?.fields.thumbnail}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <h4
-                              className="font-semibold leading-snug group-hover:opacity-80 transition-colors"
-                              style={{ color: "#F9FAFB" }}
-                            >
-                              {article?.webTitle}
-                            </h4>
-                            
-                            <div className="text-xs" style={{color: 'rgba(167, 190, 205, 0.6)'}}> 
-                              {new Date(article.webPublicationDate).toLocaleDateString()}
-                              <a href={article.webUrl}> Read More</a>
-                            </div>
-                          </div>
-                          {index < MAX_ARTICLES - 1 && (
-                            <div
-                              className="border-b mt-6"
-                              style={{
-                                borderColor: "rgba(167, 190, 205, 0.1)",
-                              }}
-                            ></div>
-                          )}
+                  {getNewsArticles()?.map((article, index) => (
+                    <div key={article.id} className="group cursor-pointer">
+                      <div
+                        className="aspect-video rounded-xl overflow-hidden mb-3 group-hover:bg-opacity-20 transition-colors"
+                        style={{
+                          backgroundColor: "rgba(167, 190, 205, 0.05)",
+                        }}
+                      >
+                        <img
+                          // alt={article?.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          src={article.imgsrc}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <h4
+                          className="font-semibold leading-snug group-hover:opacity-80 transition-colors"
+                          style={{ color: "#F9FAFB" }}
+                        >
+                          {article.title}
+                        </h4>
+
+                        <div
+                          className="text-xs"
+                          style={{ color: "rgba(167, 190, 205, 0.6)" }}
+                        >
+                          {article.published}
+                          <a href={article.url}> Read More</a>
                         </div>
-                      )
-                  )}
+                      </div>
+                      {index < MAX_ARTICLES - 1 && (
+                        <div
+                          className="border-b mt-6"
+                          style={{
+                            borderColor: "rgba(167, 190, 205, 0.1)",
+                          }}
+                        ></div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
