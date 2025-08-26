@@ -1,46 +1,28 @@
-import React, { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+import React from "react";
 
-function HeroSection() {
-  useGSAP(() => {
-    console.log("element found :", document.querySelector(".float-animate"));
-    let rand20 = ((Math.random() * 10 % 2) ? -1 : 1 ) * (Math.random() * 1000) % 20;
-    let rand10 = ((Math.random() * 10 % 2) ? -1 : 1 ) * (Math.random() * 1000) % 10;
-    console.log("rand20 = ", rand20);
-    console.log("rand10 = ", rand10);
-    gsap
-      .timeline()
-      .from(".hero-text", {
-        y: -50,
-        opacity: 0,
-        duration: 0.5,
-        ease: "power3.out",
-        stagger: 0.2,
-      })
-      .to(".float-animate", {
-        y: 0,
-        x: rand10,
-        duration: 3,
-        ease: "power1.inOut",
-        yoyo: true,
-        repeat: -1,
-        stagger: 0.2,
-      });
-  });
+const HeroSection = () => {
+  const HERO_TITLE = "How is your day?";
+  const HERO_SUBTITLE = "Weather insights and top stories for your city";
 
   return (
-    <section
-      className="font-merri min-h-[33vh] bg-secondaryhero px-0 py-0 
-         text-primaryhero font-bold 
-        text-9xl text-center justify-center flex items-baseline 
-        border-b-8 border-border"
-    >
-      <div>
-        <div className="float-animate hero-text  ">HOW IS YOUR DAY?</div>
-      </div>
-    </section>
+    <div className="text-center mb-12">
+      <h1
+        className="text-5xl font-bold mb-4"
+        style={{
+          background:
+            "linear-gradient(135deg, #F9FAFB 0%, #A7CDC9 50%, #A7BECD 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}
+      >
+        {HERO_TITLE}
+      </h1>
+      <p className="text-lg" style={{ color: "#A7CDC9" }}>
+        {HERO_SUBTITLE}
+      </p>
+    </div>
   );
-}
+};
 
 export default HeroSection;
