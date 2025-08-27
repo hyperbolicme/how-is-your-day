@@ -23,4 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 .env
-how-is-your-day.code-workspace
+*.code-workspace
+*.pem
