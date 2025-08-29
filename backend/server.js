@@ -2,12 +2,106 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const fs = require('fs').promises;
+const fsSync = require('fs'); 
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Cache configuration
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const LOCAL_CACHE_DIR = path.join(__dirname, 'cache');
+const EBS_CACHE_DIR = '/mnt/data/cache';
+
+// Determine cache directory based on environment
+let CACHE_DIR;
+if (process.env.NODE_ENV === 'production' || fsSync.existsSync('/mnt/data')) {
+  CACHE_DIR = EBS_CACHE_DIR;
+  console.log('Using EBS cache directory:', CACHE_DIR);
+} else {
+  CACHE_DIR = LOCAL_CACHE_DIR;
+  console.log('Using local cache directory:', CACHE_DIR);
+}
+
+// Ensure cache directory exists
+async function initializeCache() {
+  try {
+    await fs.access(CACHE_DIR);
+    console.log('Cache directory exists:', CACHE_DIR);
+  } catch (error) {
+    console.log('Creating cache directory:', CACHE_DIR);
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+  }
+}
+
+// Cache utility functions
+const cache = {
+  // Generate cache key
+  generateKey(type, params) {
+    const paramString = JSON.stringify(params);
+    const crypto = require('crypto');
+    const hash = crypto.createHash('md5').update(paramString).digest('hex');
+    return `${type}_${hash}.json`;
+  },
+
+  // Read from cache
+  async get(key) {
+    try {
+      const filePath = path.join(CACHE_DIR, key);
+      const data = await fs.readFile(filePath, 'utf8');
+      const parsed = JSON.parse(data);
+      
+      // Check if cache is expired
+      if (Date.now() > parsed.expiresAt) {
+        console.log(`Cache expired for key: ${key}`);
+        await this.delete(key);
+        return null;
+      }
+      
+      console.log(`Cache hit for key: ${key}`);
+      return parsed.data;
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.error('Cache read error:', error);
+      }
+      return null;
+    }
+  },
+
+  // Write to cache
+  async set(key, data) {
+    try {
+      const cacheData = {
+        data,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + CACHE_DURATION
+      };
+      
+      const filePath = path.join(CACHE_DIR, key);
+      await fs.writeFile(filePath, JSON.stringify(cacheData, null, 2));
+      console.log(`Cache written for key: ${key} (30 min TTL)`);
+    } catch (error) {
+      console.error('Cache write error:', error);
+    }
+  },
+
+  // Delete cache entry
+  async delete(key) {
+    try {
+      const filePath = path.join(CACHE_DIR, key);
+      await fs.unlink(filePath);
+      console.log(`Cache deleted for key: ${key}`);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.error('Cache delete error:', error);
+      }
+    }
+  }
+};
 
 // Middleware
 app.use(cors({
@@ -54,6 +148,15 @@ app.get('/api/getweather', async (req, res) => {
 
     // Sanitize input
     const sanitizedCity = city.trim();
+
+    // Check cache first
+    const cacheKey = cache.generateKey('weather', { city: sanitizedCity });
+    const cachedData = await cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`Weather cache hit for: ${sanitizedCity}`);
+      return res.json(cachedData);
+    }
 
     // Make API call to OpenWeatherMap
     const apiKey = process.env.WEATHER_API_KEY;
@@ -109,6 +212,9 @@ app.get('/api/getweather', async (req, res) => {
       timestamp: new Date().toISOString()
     };
 
+    // Cache the response
+    await cache.set(cacheKey, responseData);
+
     res.json(responseData);
 
   } catch (error) {
@@ -135,6 +241,16 @@ app.get('/api/getforecast', async (req, res) => {
     }
 
     const sanitizedCity = city.trim();
+
+    // Check cache first
+    const cacheKey = cache.generateKey('forecast', { city: sanitizedCity });
+    const cachedData = await cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`Forecast cache hit for: ${sanitizedCity}`);
+      return res.json(cachedData);
+    }
+
     const apiKey = process.env.WEATHER_API_KEY;
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(sanitizedCity)}&appid=${apiKey}&units=metric`;
 
@@ -181,6 +297,9 @@ app.get('/api/getforecast', async (req, res) => {
       timestamp: new Date().toISOString()
     };
 
+    // Cache the response
+    await cache.set(cacheKey, responseData);
+
     res.json(responseData);
 
   } catch (error) {
@@ -211,6 +330,15 @@ app.get('/api/getnews', async (req, res) => {
         success: false,
         error: 'Country must be a valid 2-letter country code (e.g., "us", "in", "gb")'
       });
+    }
+
+    // Check cache first
+    const cacheKey = cache.generateKey('news', { country: countryCode, category, pageSize });
+    const cachedData = await cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`News cache hit for: ${countryCode}`);
+      return res.json(cachedData);
     }
 
     const apiKey = process.env.NEWS_API_KEY;
@@ -281,6 +409,9 @@ app.get('/api/getnews', async (req, res) => {
       timestamp: new Date().toISOString()
     };
 
+    // Cache the response
+    await cache.set(cacheKey, responseData);
+
     res.json(responseData);
 
   } catch (error) {
@@ -311,6 +442,15 @@ app.get('/api/getnews-guardian', async (req, res) => {
         success: false,
         error: 'Country must be a valid 2-letter country code (e.g., "US", "IN", "GB")'
       });
+    }
+
+    // Check cache first
+    const cacheKey = cache.generateKey('guardian', { country: countryCode, pageSize, orderBy });
+    const cachedData = await cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`Guardian news cache hit for: ${countryCode}`);
+      return res.json(cachedData);
     }
 
     const apiKey = process.env.NEWS_GUARDIAN_API_KEY;
@@ -391,6 +531,9 @@ app.get('/api/getnews-guardian', async (req, res) => {
       timestamp: new Date().toISOString()
     };
 
+    // Cache the response
+    await cache.set(cacheKey, responseData);
+
     res.json(responseData);
 
   } catch (error) {
@@ -414,6 +557,15 @@ app.get('/api/getnews-combined', async (req, res) => {
       });
     }
 
+    // Check cache first for combined endpoint
+    const cacheKey = cache.generateKey('combined', { country, pageSize });
+    const cachedData = await cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`Combined news cache hit for: ${country}`);
+      return res.json(cachedData);
+    }
+
     // Try Guardian API first
     try {
       const guardianUrl = `/api/getnews-guardian?country=${country}&pageSize=${pageSize}`;
@@ -424,6 +576,8 @@ app.get('/api/getnews-combined', async (req, res) => {
         if (guardianData.success && guardianData.data.articles.length > 0) {
           // Add source indicator
           guardianData.data.source = 'guardian';
+          // Cache the combined result
+          await cache.set(cacheKey, guardianData);
           return res.json(guardianData);
         }
       }
@@ -441,6 +595,8 @@ app.get('/api/getnews-combined', async (req, res) => {
         if (newsApiData.success) {
           // Add source indicator
           newsApiData.data.source = 'newsapi';
+          // Cache the combined result
+          await cache.set(cacheKey, newsApiData);
           return res.json(newsApiData);
         }
       }
@@ -468,6 +624,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'Weather API server is running',
+    cacheDir: CACHE_DIR,
     timestamp: new Date().toISOString()
   });
 });
@@ -490,10 +647,24 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🌤️  Weather API server running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🌡️  Weather endpoint: http://localhost:${PORT}/api/getweather?city=<cityname>`);
-});
+async function startServer() {
+  try {
+    // Initialize cache directory
+    await initializeCache();
+    
+    app.listen(PORT, () => {
+      console.log(`🌤️  Weather API server running on port ${PORT}`);
+      console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`🌡️  Weather endpoint: http://localhost:${PORT}/api/getweather?city=<cityname>`);
+      console.log(`🗂️  Cache directory: ${CACHE_DIR}`);
+      console.log(`⏰ Cache duration: 30 minutes`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 module.exports = app;
