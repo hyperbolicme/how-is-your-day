@@ -27,8 +27,6 @@ if (process.env.NODE_ENV === 'production' || fsSync.existsSync('/mnt/data')) {
   console.log('Using local cache directory:', CACHE_DIR);
 }
 
-const path = require('path');
-
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
