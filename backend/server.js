@@ -30,11 +30,6 @@ if (process.env.NODE_ENV === 'production' || fsSync.existsSync('/mnt/data')) {
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-// Handle React routing (add this AFTER all API routes)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
-});
-
 // Ensure cache directory exists
 async function initializeCache() {
   try {
@@ -637,14 +632,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Endpoint not found'
+// Handle React routing (add this AFTER all API routes)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
   });
-});
-
+  
+  
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
@@ -653,6 +646,7 @@ app.use((err, req, res, next) => {
     error: 'Internal server error'
   });
 });
+
 
 // Start server
 async function startServer() {
