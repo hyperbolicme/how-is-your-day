@@ -27,6 +27,16 @@ if (process.env.NODE_ENV === 'production' || fsSync.existsSync('/mnt/data')) {
   console.log('Using local cache directory:', CACHE_DIR);
 }
 
+const path = require('path');
+
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+// Handle React routing (add this AFTER all API routes)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+});
+
 // Ensure cache directory exists
 async function initializeCache() {
   try {
