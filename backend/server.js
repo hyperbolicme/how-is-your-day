@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const fs = require('fs').promises;
 const fsSync = require('fs'); 
 const path = require('path');
-const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 
 // Load environment variables
 dotenv.config();
@@ -14,8 +14,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Configure AWS SDK (it will use your EC2 instance IAM role)
-const s3 = new AWS.S3({
-  region: 'ap-south-1' // Your bucket region
+// Configure AWS SDK v3
+const s3Client = new S3Client({
+  region: 'ap-south-1'
 });
 
 // Cache configuration
@@ -138,11 +139,17 @@ if (missingOptionalEnvVars.length > 0) {
 // Helper function to check if we're running on EC2 with proper AWS access
 async function hasAWSAccess() {
   try {
-    // Try to get AWS credentials
-    await AWS.config.getCredentials();
+    // Simple test - try to list objects
+    const command = new ListObjectsV2Command({
+      Bucket: 'weather-app-reports-hyperbolicme',
+      MaxKeys: 1
+    });
+    
+    await s3Client.send(command);
     return true;
   } catch (error) {
     console.log('⚠️ AWS credentials not available, will save locally');
+    console.log('AWS Error:', error.message);
     return false;
   }
 }
@@ -789,12 +796,12 @@ app.post('/api/generate-report', async (req, res) => {
     let saveResult;
     
     if (hasAWS) {
-      // Save to S3
+      // Save to S3 using AWS SDK v3
       try {
-        console.log('☁️ Saving to S3...');
-        const s3Key = `reports/user123/${fileName}`;
+        console.log('☁️ Saving to S3 with AWS SDK v3...');
+        const s3Key = `reports/default_user/${fileName}`;
         
-        const s3Params = {
+        const putCommand = new PutObjectCommand({
           Bucket: 'weather-app-reports-hyperbolicme',
           Key: s3Key,
           Body: JSON.stringify(report, null, 2),
@@ -804,10 +811,10 @@ app.post('/api/generate-report', async (req, res) => {
             'city': city,
             'date': dateStr
           }
-        };
+        });
         
-        await s3.putObject(s3Params).promise();
-        console.log('✅ Report saved to S3');
+        await s3Client.send(putCommand);
+        console.log('✅ Report saved to S3 successfully!');
         
         saveResult = {
           location: 'S3',
@@ -884,19 +891,18 @@ app.get('/api/health', (req, res) => {
 // Test endpoint to verify S3 connectivity
 app.get('/api/test-s3', async (req, res) => {
   try {
-    console.log('🧪 Testing S3 connectivity...');
+    console.log('🧪 Testing S3 connectivity with AWS SDK v3...');
     
-    // List objects in your bucket
-    const listParams = {
+    const command = new ListObjectsV2Command({
       Bucket: 'weather-app-reports-hyperbolicme',
       MaxKeys: 10
-    };
+    });
     
-    const result = await s3.listObjectsV2(listParams).promise();
+    const result = await s3Client.send(command);
     
     res.json({
       success: true,
-      message: 'S3 connection successful!',
+      message: 'S3 connection successful with AWS SDK v3!',
       bucket: 'weather-app-reports-hyperbolicme',
       objects_count: result.Contents?.length || 0,
       objects: result.Contents?.map(obj => ({
@@ -915,7 +921,6 @@ app.get('/api/test-s3', async (req, res) => {
     });
   }
 });
-
 // Handle React routing (add this AFTER all API routes)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
