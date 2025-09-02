@@ -26,3 +26,5 @@ dist-ssr
 *.code-workspace
 *.pem
 backend/cache/*.json
+CLAUDE.md
+backend/local-reports/*.json

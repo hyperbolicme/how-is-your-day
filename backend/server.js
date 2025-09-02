@@ -5,12 +5,18 @@ const dotenv = require('dotenv');
 const fs = require('fs').promises;
 const fsSync = require('fs'); 
 const path = require('path');
+const AWS = require('aws-sdk');
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Configure AWS SDK (it will use your EC2 instance IAM role)
+const s3 = new AWS.S3({
+  region: 'ap-south-1' // Your bucket region
+});
 
 // Cache configuration
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
@@ -127,6 +133,39 @@ if (missingEnvVars.length > 0) {
 const missingOptionalEnvVars = optionalEnvVars.filter(envVar => !process.env[envVar]);
 if (missingOptionalEnvVars.length > 0) {
   console.warn('Missing optional environment variables (news features may not work):', missingOptionalEnvVars);
+}
+
+// Helper function to check if we're running on EC2 with proper AWS access
+async function hasAWSAccess() {
+  try {
+    // Try to get AWS credentials
+    await AWS.config.getCredentials();
+    return true;
+  } catch (error) {
+    console.log('⚠️ AWS credentials not available, will save locally');
+    return false;
+  }
+}
+
+// Helper function to save report locally when AWS isn't available
+async function saveReportLocally(report, fileName) {
+  try {
+    const reportsDir = path.join(__dirname, 'local-reports');
+    
+    // Create directory if it doesn't exist
+    try {
+      await fs.access(reportsDir);
+    } catch {
+      await fs.mkdir(reportsDir, { recursive: true });
+    }
+    
+    const filePath = path.join(reportsDir, fileName);
+    await fs.writeFile(filePath, JSON.stringify(report, null, 2));
+    
+    return filePath;
+  } catch (error) {
+    throw new Error(`Failed to save report locally: ${error.message}`);
+  }
 }
 
 // Weather API endpoint
@@ -622,6 +661,216 @@ app.get('/api/getnews-combined', async (req, res) => {
   }
 });
 
+app.post('/api/generate-report', async (req, res) => {
+  try {
+    console.log('🚀 Generating comprehensive daily report...');
+    
+    const { city = 'Mumbai' } = req.body;
+    
+    // Check if required environment variables exist
+    if (!process.env.WEATHER_API_KEY || !process.env.NEWS_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        error: 'Missing required API keys. Please check your environment variables.',
+        missing: {
+          weather_api: !process.env.WEATHER_API_KEY,
+          news_api: !process.env.NEWS_API_KEY
+        }
+      });
+    }
+    
+    console.log(`📊 Fetching data for ${city}...`);
+    
+    // 1. Fetch weather data with better error handling
+    let currentWeather, forecastData;
+    
+    try {
+      console.log('🌤️ Fetching current weather...');
+      const weatherResponse = await fetch(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.WEATHER_API_KEY}&units=metric`);
+      
+      if (!weatherResponse.ok) {
+        throw new Error(`Weather API returned ${weatherResponse.status}: ${weatherResponse.statusText}`);
+      }
+      
+      currentWeather = await weatherResponse.json();
+      console.log('✅ Current weather fetched');
+      
+      console.log('🌤️ Fetching forecast...');
+      const forecastResponse = await fetch(`http://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${process.env.WEATHER_API_KEY}&units=metric`);
+      
+      if (!forecastResponse.ok) {
+        throw new Error(`Forecast API returned ${forecastResponse.status}: ${forecastResponse.statusText}`);
+      }
+      
+      forecastData = await forecastResponse.json();
+      console.log('✅ Forecast data fetched');
+      
+    } catch (weatherError) {
+      console.error('❌ Weather API error:', weatherError.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch weather data',
+        details: weatherError.message
+      });
+    }
+    
+    // 2. Fetch news data with error handling
+    let newsData;
+    
+    try {
+      console.log('📰 Fetching news...');
+      const newsResponse = await fetch(`https://newsapi.org/v2/top-headlines?country=in&pageSize=5&apiKey=${process.env.NEWS_API_KEY}`);
+      
+      if (!newsResponse.ok) {
+        throw new Error(`News API returned ${newsResponse.status}: ${newsResponse.statusText}`);
+      }
+      
+      newsData = await newsResponse.json();
+      console.log('✅ News data fetched');
+      
+    } catch (newsError) {
+      console.error('❌ News API error:', newsError.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch news data',
+        details: newsError.message
+      });
+    }
+    
+    // 3. Create comprehensive report
+    const timestamp = new Date();
+    const dateStr = timestamp.toISOString().split('T')[0];
+    const timestampStr = Math.floor(timestamp.getTime() / 1000);
+    
+    const report = {
+      metadata: {
+        city: city,
+        date: dateStr,
+        generated_at: timestamp.toISOString(),
+        report_version: '1.0',
+        environment: process.env.NODE_ENV || 'development'
+      },
+      weather: {
+        current: {
+          temperature: currentWeather.main?.temp || 'N/A',
+          feels_like: currentWeather.main?.feels_like || 'N/A',
+          humidity: currentWeather.main?.humidity || 'N/A',
+          pressure: currentWeather.main?.pressure || 'N/A',
+          description: currentWeather.weather?.[0]?.description || 'N/A',
+          wind_speed: currentWeather.wind?.speed || 'N/A'
+        },
+        forecast: forecastData.list?.slice(0, 8).map(item => ({
+          datetime: new Date(item.dt * 1000).toISOString(),
+          temperature: item.main.temp,
+          description: item.weather[0].description,
+          humidity: item.main.humidity
+        })) || []
+      },
+      news: {
+        headlines: newsData.articles?.slice(0, 5).map(article => ({
+          title: article.title,
+          description: article.description,
+          source: article.source.name,
+          published_at: article.publishedAt,
+          url: article.url
+        })) || [],
+        total_articles: newsData.totalResults || 0
+      },
+      summary: {
+        weather_summary: `Current temperature in ${city} is ${currentWeather.main?.temp || 'N/A'}°C with ${currentWeather.weather?.[0]?.description || 'unknown conditions'}`,
+        top_news: newsData.articles?.[0]?.title || 'No news available'
+      }
+    };
+    
+    const fileName = `${city.toLowerCase()}-${dateStr}-${timestampStr}.json`;
+    
+    // 4. Save report (S3 if available, local otherwise)
+    const hasAWS = await hasAWSAccess();
+    let saveResult;
+    
+    if (hasAWS) {
+      // Save to S3
+      try {
+        console.log('☁️ Saving to S3...');
+        const s3Key = `reports/user123/${fileName}`;
+        
+        const s3Params = {
+          Bucket: 'weather-app-reports-hyperbolicme',
+          Key: s3Key,
+          Body: JSON.stringify(report, null, 2),
+          ContentType: 'application/json',
+          Metadata: {
+            'generated-by': 'weather-app',
+            'city': city,
+            'date': dateStr
+          }
+        };
+        
+        await s3.putObject(s3Params).promise();
+        console.log('✅ Report saved to S3');
+        
+        saveResult = {
+          location: 'S3',
+          s3_key: s3Key,
+          bucket: 'weather-app-reports-hyperbolicme'
+        };
+        
+      } catch (s3Error) {
+        console.error('❌ S3 save failed, falling back to local save:', s3Error.message);
+        const localPath = await saveReportLocally(report, fileName);
+        saveResult = {
+          location: 'Local (S3 failed)',
+          local_path: localPath,
+          s3_error: s3Error.message
+        };
+      }
+    } else {
+      // Save locally
+      console.log('💾 Saving locally...');
+      const localPath = await saveReportLocally(report, fileName);
+      console.log('✅ Report saved locally');
+      
+      saveResult = {
+        location: 'Local',
+        local_path: localPath,
+        note: 'AWS credentials not available - saved to local filesystem'
+      };
+    }
+    
+    // 5. Return success response
+    res.status(201).json({
+      success: true,
+      message: 'Daily report generated and stored successfully!',
+      report: {
+        filename: fileName,
+        city: city,
+        date: dateStr,
+        generated_at: timestamp.toISOString(),
+        size_bytes: JSON.stringify(report).length,
+        storage: saveResult
+      },
+      preview: {
+        current_temp: report.weather.current.temperature + '°C',
+        weather_desc: report.weather.current.description,
+        top_headline: report.news.headlines[0]?.title || 'No news available',
+        forecast_items: report.weather.forecast.length,
+        news_items: report.news.headlines.length
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error generating report:', error);
+    console.error('Full error stack:', error.stack);
+    
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error',
+      timestamp: new Date().toISOString(),
+      endpoint: '/api/generate-report'
+    });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
@@ -632,11 +881,45 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Test endpoint to verify S3 connectivity
+app.get('/api/test-s3', async (req, res) => {
+  try {
+    console.log('🧪 Testing S3 connectivity...');
+    
+    // List objects in your bucket
+    const listParams = {
+      Bucket: 'weather-app-reports-hyperbolicme',
+      MaxKeys: 10
+    };
+    
+    const result = await s3.listObjectsV2(listParams).promise();
+    
+    res.json({
+      success: true,
+      message: 'S3 connection successful!',
+      bucket: 'weather-app-reports-hyperbolicme',
+      objects_count: result.Contents?.length || 0,
+      objects: result.Contents?.map(obj => ({
+        key: obj.Key,
+        size: obj.Size,
+        last_modified: obj.LastModified
+      })) || []
+    });
+    
+  } catch (error) {
+    console.error('❌ S3 connectivity test failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'S3 connection failed',
+      error: error.message
+    });
+  }
+});
+
 // Handle React routing (add this AFTER all API routes)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
   });
-  
   
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -670,3 +953,4 @@ async function startServer() {
 startServer();
 
 module.exports = app;
+
