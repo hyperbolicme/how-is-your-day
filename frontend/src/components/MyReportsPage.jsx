@@ -12,6 +12,8 @@ import {
   Cloud
 } from "lucide-react";
 
+import { generateReportPDF } from "../utils/pdfGenerator";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 function MyReportsPage ({ onBack }) {
@@ -57,22 +59,31 @@ function MyReportsPage ({ onBack }) {
 
   const handleReportClick = async (filename) => {
     try {
-      console.log(`Downloading report: ${filename}`);
+      console.log(`Generating PDF for report: ${filename}`);
       
-      // For now, we'll just fetch the report data
-      // Later this will generate a PDF
+      // Fetch the report data
       const response = await fetch(`${API_BASE_URL}/api/report/${filename}`);
       const data = await response.json();
       
       if (data.success) {
-        console.log("Report data:", data.data.report);
-        // TODO: Generate PDF from this data
-        alert(`PDF generation coming soon!\n\nReport for ${data.data.report.metadata.city} on ${data.data.report.metadata.date}\nWeather: ${data.data.report.weather.current.temperature}°C, ${data.data.report.weather.current.description}\nNews articles: ${data.data.report.news.headlines.length}`);
+        console.log("Report data fetched, generating PDF...");
+        
+        // Generate PDF from the report data
+        const pdfResult = generateReportPDF(data.data.report, filename);
+        
+        if (pdfResult.success) {
+          console.log(`PDF generated successfully: ${pdfResult.filename}`);
+        } else {
+          console.error("PDF generation failed:", pdfResult.error);
+          alert(`Failed to generate PDF: ${pdfResult.error}`);
+        }
+      } else {
+        throw new Error(data.error || 'Failed to fetch report');
       }
       
     } catch (error) {
-      console.error("Error fetching report details:", error);
-      alert("Failed to load report details");
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF report");
     }
   };
 
