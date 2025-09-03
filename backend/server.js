@@ -737,7 +737,6 @@ app.post('/api/generate-report', async (req, res) => {
       
       newsData = await newsResponse.json();
       console.log('✅ News data fetched');
-      console.log(newsData);
       
     } catch (newsError) {
       console.error('❌ News API error:', newsError.message);
