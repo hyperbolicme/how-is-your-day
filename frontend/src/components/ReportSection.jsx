@@ -5,6 +5,9 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
+  Thermometer,
+  Newspaper,
+  ChartColumnBig,
 } from "lucide-react";
 
 // API base URL
@@ -162,7 +165,7 @@ function ReportSection({ isLoading, currentCity }) {
               />
               <div className="flex-1">
                 <h4 className="font-medium mb-2" style={{ color: "#F9FAFB" }}>
-                  Report Generated Successfully! 🎉
+                  Report Generated Successfully!
                 </h4>
 
                 <div className="space-y-2 text-sm">
@@ -222,9 +225,8 @@ function ReportSection({ isLoading, currentCity }) {
                     style={{ backgroundColor: "rgba(167, 205, 201, 0.05)" }}
                   >
                     <div className="flex items-center space-x-2 mb-2">
-                      <Clock className="w-4 h-4" style={{ color: "#A7CDC9" }} />
                       <span
-                        className="text-xs font-medium"
+                        className="text-sm font-medium"
                         style={{ color: "#A7CDC9" }}
                       >
                         Report Preview
@@ -232,17 +234,43 @@ function ReportSection({ isLoading, currentCity }) {
                     </div>
                     <div className="text-xs space-y-1">
                       <div style={{ color: "#F9FAFB" }}>
-                        🌡️ {reportSuccess.preview.current_temp} -{" "}
-                        {reportSuccess.preview.weather_desc}
+                        <Thermometer
+                          className="w-4 h-4"
+                          style={{ color: "#A7CDC9" }}
+                        />
+                        <span
+                          className="text-xs font-medium"
+                          style={{ color: "#A7CDC9" }}
+                        >
+                          {reportSuccess.preview.current_temp} -{" "}
+                          {reportSuccess.preview.weather_desc}
+                        </span>
                       </div>
                       <div style={{ color: "rgba(167, 205, 201, 0.8)" }}>
-                        📰{" "}
-                        {reportSuccess.preview.top_headline ||
-                          "Latest news included"}
+                        <Newspaper
+                          className="w-4 h-4"
+                          style={{ color: "#A7CDC9" }}
+                        />
+                        <span
+                          className="text-xs font-medium"
+                          style={{ color: "#A7CDC9" }}
+                        >
+                          {reportSuccess.preview.top_headline ||
+                            "Latest news included"}
+                        </span>
                       </div>
                       <div style={{ color: "rgba(167, 205, 201, 0.6)" }}>
-                        📊 {reportSuccess.preview.forecast_items} forecasts,{" "}
-                        {reportSuccess.preview.news_items} news items
+                        <ChartColumnBig
+                          className="w-4 h-4"
+                          style={{ color: "#A7CDC9" }}
+                        />
+                        <span
+                          className="text-xs font-medium"
+                          style={{ color: "#A7CDC9" }}
+                        >
+                          {reportSuccess.preview.forecast_items} forecasts,{" "}
+                          {reportSuccess.preview.news_items} news items{" "}
+                        </span>
                       </div>
                     </div>
                   </div>
