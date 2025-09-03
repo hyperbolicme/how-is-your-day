@@ -233,7 +233,7 @@ function ReportSection({ isLoading, currentCity }) {
                       </span>
                     </div>
                     <div className="text-xs space-y-1">
-                      <div style={{ color: "#F9FAFB" }}>
+                      <div className="flex items-center space-x-2" style={{ color: "#F9FAFB" }}>
                         <Thermometer
                           className="w-4 h-4"
                           style={{ color: "#A7CDC9" }}
@@ -246,7 +246,7 @@ function ReportSection({ isLoading, currentCity }) {
                           {reportSuccess.preview.weather_desc}
                         </span>
                       </div>
-                      <div style={{ color: "rgba(167, 205, 201, 0.8)" }}>
+                      <div className="flex items-center space-x-2" style={{ color: "rgba(167, 205, 201, 0.8)" }}>
                         <Newspaper
                           className="w-4 h-4"
                           style={{ color: "#A7CDC9" }}
@@ -259,7 +259,7 @@ function ReportSection({ isLoading, currentCity }) {
                             "Latest news included"}
                         </span>
                       </div>
-                      <div style={{ color: "rgba(167, 205, 201, 0.6)" }}>
+                      <div className="flex items-center space-x-2" style={{ color: "rgba(167, 205, 201, 0.6)" }}>
                         <ChartColumnBig
                           className="w-4 h-4"
                           style={{ color: "#A7CDC9" }}
