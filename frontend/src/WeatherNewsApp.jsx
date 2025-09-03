@@ -6,6 +6,7 @@ import LoadingAnimation from "./components/LoadingAnimation.jsx";
 import WeatherSection from "./components/WeatherSection.jsx";
 import TopNewsSection from "./components/TopNewsSection.jsx";
 import ReportSection from "./components/ReportSection.jsx";
+import MyReportsPage from "./components/MyReportsPage.jsx";
 
 const DEFAULT_CITY = "Kochi";
 const DEFAULT_COUNTRY = "IN";
@@ -15,7 +16,20 @@ const WeatherNewsApp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [error, setError] = useState(null);
+  
+  // Navigation state
+  const [currentView, setCurrentView] = useState("main"); // "main" or "reports"
 
+  // Navigation handlers
+  const goToReports = () => setCurrentView("reports");
+  const backToMain = () => setCurrentView("main");
+
+  // If showing reports page, render only that
+  if (currentView === "reports") {
+    return <MyReportsPage onBack={backToMain} />;
+  }
+
+  // Otherwise render the main weather app
   return (
     <div
       className="min-h-screen font-mont"
@@ -34,26 +48,30 @@ const WeatherNewsApp = () => {
           setIsLoading={setIsLoading}
         />
 
-        {/* Generate Report Section */}
-        <ReportSection 
-          isLoading={isLoading} 
-          currentCity={currentCity} 
-          country={country}
-        />
-
         {isLoading ? (
           <LoadingAnimation />
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Weather Section */}
-            <WeatherSection
-              currentCity={currentCity}
-              setCurrentCity={setCurrentCity}
-              setIsLoading={setIsLoading}
-              setCountry={setCountry}
-            />
-            {/* News Section */}
-            <TopNewsSection country={country} setIsLoading={setIsLoading} />
+            {/* Left Column: Weather Section (spans 2 columns) */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Generate Report Section */}
+              <ReportSection 
+                isLoading={isLoading} 
+                currentCity={currentCity} 
+                country={country}
+                onViewReports={goToReports} // Pass navigation function
+              />
+              
+              {/* Weather Section */}
+              <WeatherSection
+                currentCity={currentCity}
+                setCurrentCity={setCurrentCity}
+                setIsLoading={setIsLoading}
+                setCountry={setCountry}
+              />
+              {/* News Section */}
+              <TopNewsSection country={country} setIsLoading={setIsLoading} />
+            </div>
           </div>
         )}
       </div>

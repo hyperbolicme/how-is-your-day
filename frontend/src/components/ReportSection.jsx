@@ -13,7 +13,7 @@ import {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-function ReportSection({ isLoading, currentCity, country }) {
+function ReportSection({ isLoading, currentCity, country, onViewReports }) {
   // Report generation states
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(null);
@@ -82,7 +82,7 @@ function ReportSection({ isLoading, currentCity, country }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mb-8">
+    <div className="mb-8">
       <div className="backdrop-blur-lg border border-secondaryone/15 bg-secondaryone/10 rounded-2xl p-6">
         {/* Report Generation Button */}
         <div className="flex items-center justify-between mb-4">
@@ -112,6 +112,14 @@ function ReportSection({ isLoading, currentCity, country }) {
               }
             `}
           >
+
+          <button
+            onClick={onViewReports}
+            className="flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 bg-primaryonelight/20 text-textlight hover:bg-primaryonelight/30"
+          >
+        <FileText className="w-4 h-4" />
+        <span>My Reports</span>
+        </button>  
             {isGeneratingReport ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondaryone/30 border-t-secondaryone"></div>

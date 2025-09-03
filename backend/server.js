@@ -5,7 +5,12 @@ const dotenv = require('dotenv');
 const fs = require('fs').promises;
 const fsSync = require('fs'); 
 const path = require('path');
-const { S3Client, PutObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+const {
+  S3Client,
+  PutObjectCommand,
+  ListObjectsV2Command,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3");
 
 // Load environment variables
 dotenv.config();
@@ -877,6 +882,311 @@ app.post('/api/generate-report', async (req, res) => {
       error: error.message || 'Internal server error',
       timestamp: new Date().toISOString(),
       endpoint: '/api/generate-report'
+    });
+  }
+});
+
+// 1. Get list of all reports endpoint
+app.get('/api/my-reports', async (req, res) => {
+  try {
+    console.log('📋 Fetching list of all reports...');
+    
+    const hasAWS = await hasAWSAccess();
+    
+    if (hasAWS) {
+      // Get reports from S3
+      try {
+        console.log('☁️ Listing reports from S3...');
+        
+        const command = new ListObjectsV2Command({
+          Bucket: 'weather-app-reports-hyperbolicme',
+          Prefix: 'reports/default_user/',
+          MaxKeys: 100 // Adjust as needed
+        });
+        
+        const result = await s3Client.send(command);
+        
+        if (!result.Contents || result.Contents.length === 0) {
+          return res.json({
+            success: true,
+            message: 'No reports found',
+            data: {
+              reports: [],
+              total_count: 0,
+              storage_location: 'S3'
+            }
+          });
+        }
+        
+        // Transform S3 objects to report list
+        const reports = result.Contents
+          .filter(obj => obj.Key.endsWith('.json') && obj.Key !== 'reports/default_user/') // Filter out directory entries
+          .map(obj => {
+            const filename = obj.Key.split('/').pop(); // Get filename from S3 key
+            
+            // Parse filename to extract info: cityname-YYYY-MM-DD-timestamp.json
+            const parts = filename.replace('.json', '').split('-');
+            let city = 'Unknown';
+            let date = 'Unknown';
+            
+            if (parts.length >= 4) {
+              // Last part is timestamp, before that is day, month, year
+              const day = parts[parts.length - 2];
+              const month = parts[parts.length - 3];
+              const year = parts[parts.length - 4];
+              city = parts.slice(0, parts.length - 3).join('-'); // Rejoin city parts
+              date = `${year}-${month}-${day}`;
+            }
+            
+            return {
+              filename: filename,
+              s3_key: obj.Key,
+              city: city,
+              date: date,
+              size: obj.Size,
+              created_at: obj.LastModified.toISOString(),
+              storage: 'S3'
+            };
+          })
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Sort by newest first
+        
+        console.log(`✅ Found ${reports.length} reports in S3`);
+        
+        res.json({
+          success: true,
+          message: `Found ${reports.length} reports`,
+          data: {
+            reports: reports,
+            total_count: reports.length,
+            storage_location: 'S3'
+          }
+        });
+        
+      } catch (s3Error) {
+        console.error('❌ S3 list failed:', s3Error.message);
+        
+        // Fallback to local storage
+        const localReports = await getLocalReports();
+        res.json({
+          success: true,
+          message: 'S3 unavailable, showing local reports',
+          data: {
+            reports: localReports,
+            total_count: localReports.length,
+            storage_location: 'Local (S3 failed)',
+            s3_error: s3Error.message
+          }
+        });
+      }
+      
+    } else {
+      // Get reports from local storage
+      const localReports = await getLocalReports();
+      
+      res.json({
+        success: true,
+        message: `Found ${localReports.length} local reports`,
+        data: {
+          reports: localReports,
+          total_count: localReports.length,
+          storage_location: 'Local'
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error listing reports:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to list reports',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Helper function to get local reports
+async function getLocalReports() {
+  try {
+    const reportsDir = path.join(__dirname, 'local-reports');
+    
+    // Check if directory exists
+    try {
+      await fs.access(reportsDir);
+    } catch {
+      return []; // Directory doesn't exist, no reports
+    }
+    
+    const files = await fs.readdir(reportsDir);
+    const jsonFiles = files.filter(file => file.endsWith('.json'));
+    
+    const reports = await Promise.all(
+      jsonFiles.map(async (filename) => {
+        try {
+          const filePath = path.join(reportsDir, filename);
+          const stats = await fs.stat(filePath);
+          
+          // Parse filename to extract info
+          const parts = filename.replace('.json', '').split('-');
+          let city = 'Unknown';
+          let date = 'Unknown';
+          
+          if (parts.length >= 4) {
+            const day = parts[parts.length - 2];
+            const month = parts[parts.length - 3];
+            const year = parts[parts.length - 4];
+            city = parts.slice(0, parts.length - 3).join('-');
+            date = `${year}-${month}-${day}`;
+          }
+          
+          return {
+            filename: filename,
+            local_path: filePath,
+            city: city,
+            date: date,
+            size: stats.size,
+            created_at: stats.mtime.toISOString(),
+            storage: 'Local'
+          };
+        } catch (fileError) {
+          console.error(`Error processing file ${filename}:`, fileError);
+          return null;
+        }
+      })
+    );
+    
+    return reports
+      .filter(report => report !== null) // Remove failed files
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Sort by newest first
+    
+  } catch (error) {
+    console.error('Error getting local reports:', error);
+    return [];
+  }
+}
+
+// 2. Get specific report details endpoint
+app.get('/api/report/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    
+    // Validate filename
+    if (!filename || !filename.endsWith('.json')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid filename. Must be a .json file'
+      });
+    }
+    
+    // Sanitize filename to prevent path traversal
+    const sanitizedFilename = path.basename(filename);
+    
+    console.log(`📄 Fetching report details for: ${sanitizedFilename}`);
+    
+    const hasAWS = await hasAWSAccess();
+    
+    if (hasAWS) {
+      // Try to get from S3 first
+      try {
+        console.log('☁️ Fetching report from S3...');
+        
+        const { GetObjectCommand } = require('@aws-sdk/client-s3');
+        const command = new GetObjectCommand({
+          Bucket: 'weather-app-reports-hyperbolicme',
+          Key: `reports/default_user/${sanitizedFilename}`
+        });
+        
+        const result = await s3Client.send(command);
+        
+        // Convert stream to string
+        const chunks = [];
+        for await (const chunk of result.Body) {
+          chunks.push(chunk);
+        }
+        const reportData = Buffer.concat(chunks).toString('utf-8');
+        const report = JSON.parse(reportData);
+        
+        console.log('✅ Report fetched from S3');
+        
+        res.json({
+          success: true,
+          message: 'Report retrieved successfully',
+          data: {
+            filename: sanitizedFilename,
+            storage_location: 'S3',
+            s3_key: `reports/default_user/${sanitizedFilename}`,
+            size: result.ContentLength,
+            last_modified: result.LastModified?.toISOString(),
+            content_type: result.ContentType,
+            report: report
+          }
+        });
+        
+        return;
+        
+      } catch (s3Error) {
+        console.log('❌ S3 fetch failed, trying local storage:', s3Error.message);
+        
+        // Continue to try local storage
+        if (s3Error.name === 'NoSuchKey') {
+          // File doesn't exist in S3, try local
+        } else {
+          // Other S3 error, still try local but log the error
+          console.error('S3 error details:', s3Error);
+        }
+      }
+    }
+    
+    // Try local storage
+    try {
+      console.log('💾 Trying to fetch from local storage...');
+      
+      const localPath = path.join(__dirname, 'local-reports', sanitizedFilename);
+      
+      // Check if file exists
+      await fs.access(localPath);
+      
+      // Get file stats
+      const stats = await fs.stat(localPath);
+      
+      // Read file content
+      const reportData = await fs.readFile(localPath, 'utf8');
+      const report = JSON.parse(reportData);
+      
+      console.log('✅ Report fetched from local storage');
+      
+      res.json({
+        success: true,
+        message: 'Report retrieved successfully from local storage',
+        data: {
+          filename: sanitizedFilename,
+          storage_location: 'Local',
+          local_path: localPath,
+          size: stats.size,
+          last_modified: stats.mtime.toISOString(),
+          report: report
+        }
+      });
+      
+    } catch (localError) {
+      console.error('❌ Local storage fetch failed:', localError.message);
+      
+      // File not found anywhere
+      res.status(404).json({
+        success: false,
+        error: `Report '${sanitizedFilename}' not found in S3 or local storage`,
+        details: {
+          s3_checked: hasAWS,
+          local_checked: true
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error fetching report:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch report',
+      timestamp: new Date().toISOString()
     });
   }
 });
