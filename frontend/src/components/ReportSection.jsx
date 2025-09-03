@@ -93,7 +93,7 @@ function ReportSection({ isLoading, currentCity }) {
         {/* Report Generation Button */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <FileText className="w-5 h-5" style={{ color: "#A7CDC9" }} />
+            <FileText className="w-10 h-10" style={{ color: "#A7CDC9" }} />
             <div>
               <h3
                 className="text-lg font-semibold"
