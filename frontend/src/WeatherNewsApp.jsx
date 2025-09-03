@@ -38,6 +38,7 @@ const WeatherNewsApp = () => {
         <ReportSection 
           isLoading={isLoading} 
           currentCity={currentCity} 
+          country={country}
         />
 
         {isLoading ? (

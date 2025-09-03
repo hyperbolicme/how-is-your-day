@@ -672,7 +672,10 @@ app.post('/api/generate-report', async (req, res) => {
   try {
     console.log('🚀 Generating comprehensive daily report...');
     
-    const { city = 'Mumbai' } = req.body;
+    const { 
+      city = 'Kochi',
+      country = 'IN' 
+    } = req.body;
     
     // Check if required environment variables exist
     if (!process.env.WEATHER_API_KEY || !process.env.NEWS_API_KEY) {
@@ -726,7 +729,7 @@ app.post('/api/generate-report', async (req, res) => {
     
     try {
       console.log('📰 Fetching news...');
-      const newsResponse = await fetch(`https://newsapi.org/v2/top-headlines?country=in&pageSize=5&apiKey=${process.env.NEWS_API_KEY}`);
+      const newsResponse = await fetch(`https://newsapi.org/v2/top-headlines?country=${country}&pageSize=5&apiKey=${process.env.NEWS_API_KEY}`);
       
       if (!newsResponse.ok) {
         throw new Error(`News API returned ${newsResponse.status}: ${newsResponse.statusText}`);
@@ -734,6 +737,7 @@ app.post('/api/generate-report', async (req, res) => {
       
       newsData = await newsResponse.json();
       console.log('✅ News data fetched');
+      console.log(newsData);
       
     } catch (newsError) {
       console.error('❌ News API error:', newsError.message);

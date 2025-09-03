@@ -4,7 +4,6 @@ import {
   FileText,
   CheckCircle,
   AlertCircle,
-  Clock,
   Thermometer,
   Newspaper,
   ChartColumnBig,
@@ -14,7 +13,7 @@ import {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-function ReportSection({ isLoading, currentCity }) {
+function ReportSection({ isLoading, currentCity, country }) {
   // Report generation states
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(null);
@@ -40,6 +39,7 @@ function ReportSection({ isLoading, currentCity }) {
         },
         body: JSON.stringify({
           city: currentCity,
+          country: country
         }),
       });
 
@@ -83,28 +83,16 @@ function ReportSection({ isLoading, currentCity }) {
 
   return (
     <div className="max-w-2xl mx-auto mb-8">
-      <div
-        className="backdrop-blur-lg border rounded-2xl p-6"
-        style={{
-          backgroundColor: "rgba(167, 205, 201, 0.08)",
-          borderColor: "rgba(167, 205, 201, 0.15)",
-        }}
-      >
+      <div className="backdrop-blur-lg border border-secondaryone/15 bg-secondaryone/10 rounded-2xl p-6">
         {/* Report Generation Button */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <FileText className="w-10 h-10" style={{ color: "#A7CDC9" }} />
+            <FileText className="w-10 h-10 text-secondaryone" />
             <div>
-              <h3
-                className="text-lg font-semibold"
-                style={{ color: "#F9FAFB" }}
-              >
+              <h3 className="text-lg font-semibold text-textlight">
                 Daily Report
               </h3>
-              <p
-                className="text-sm"
-                style={{ color: "rgba(167, 205, 201, 0.7)" }}
-              >
+              <p className="text-sm text-secondaryone/70">
                 Save weather & news data to your cloud storage
               </p>
             </div>
@@ -114,30 +102,19 @@ function ReportSection({ isLoading, currentCity }) {
             onClick={generateDailyReport}
             disabled={isGeneratingReport || isLoading}
             className={`
-            flex items-center space-x-2 px-6 py-3 rounded-xl font-medium
-            transition-all duration-200 transform hover:scale-105
-            disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-            ${isGeneratingReport ? "animate-pulse" : ""}
-          `}
-            style={{
-              backgroundColor: isGeneratingReport
-                ? "rgba(167, 205, 201, 0.15)"
-                : "rgba(167, 205, 201, 0.2)",
-              color: "#F9FAFB",
-              boxShadow: isGeneratingReport
-                ? "none"
-                : "0 4px 12px rgba(167, 205, 201, 0.15)",
-            }}
+              flex items-center space-x-2 px-6 py-3 rounded-xl font-medium
+              transition-all duration-200 transform hover:scale-105
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+              text-textlight shadow-lg hover:shadow-secondaryone/20
+              ${isGeneratingReport 
+                ? "animate-pulse bg-secondaryone/15 shadow-none" 
+                : "bg-secondaryone/20 shadow-secondaryone/15"
+              }
+            `}
           >
             {isGeneratingReport ? (
               <>
-                <div
-                  className="animate-spin rounded-full h-4 w-4 border-2 border-t-2"
-                  style={{
-                    borderColor: "rgba(167, 205, 201, 0.3)",
-                    borderTopColor: "#A7CDC9",
-                  }}
-                ></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondaryone/30 border-t-secondaryone"></div>
                 <span>Generating...</span>
               </>
             ) : (
@@ -151,44 +128,25 @@ function ReportSection({ isLoading, currentCity }) {
 
         {/* Success Message */}
         {reportSuccess && (
-          <div
-            className="rounded-xl p-4 mb-4 border"
-            style={{
-              backgroundColor: "rgba(134, 187, 181, 0.1)",
-              borderColor: "rgba(134, 187, 181, 0.2)",
-            }}
-          >
+          <div className="rounded-xl p-4 mb-4 border border-primaryonelight/20 bg-primaryonelight/10">
             <div className="flex items-start space-x-3">
-              <CheckCircle
-                className="w-5 h-5 mt-0.5 flex-shrink-0"
-                style={{ color: "#86BBB5" }}
-              />
+              <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-primaryonelight" />
               <div className="flex-1">
-                <h4 className="font-medium mb-2" style={{ color: "#F9FAFB" }}>
+                <h4 className="font-medium mb-2 text-textlight">
                   Report Generated Successfully!
                 </h4>
 
                 <div className="space-y-2 text-sm">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span style={{ color: "rgba(167, 205, 201, 0.7)" }}>
-                        City:
-                      </span>
-                      <span
-                        className="ml-2 font-medium"
-                        style={{ color: "#F9FAFB" }}
-                      >
+                      <span className="text-secondaryone/70">City:</span>
+                      <span className="ml-2 font-medium text-textlight">
                         {reportSuccess.city}
                       </span>
                     </div>
                     <div>
-                      <span style={{ color: "rgba(167, 205, 201, 0.7)" }}>
-                        Date:
-                      </span>
-                      <span
-                        className="ml-2 font-medium"
-                        style={{ color: "#F9FAFB" }}
-                      >
+                      <span className="text-secondaryone/70">Date:</span>
+                      <span className="ml-2 font-medium text-textlight">
                         {reportSuccess.date}
                       </span>
                     </div>
@@ -196,80 +154,46 @@ function ReportSection({ isLoading, currentCity }) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span style={{ color: "rgba(167, 205, 201, 0.7)" }}>
-                        Size:
-                      </span>
-                      <span
-                        className="ml-2 font-medium"
-                        style={{ color: "#F9FAFB" }}
-                      >
+                      <span className="text-secondaryone/70">Size:</span>
+                      <span className="ml-2 font-medium text-textlight">
                         {reportSuccess.size} KB
                       </span>
                     </div>
                     <div>
-                      <span style={{ color: "rgba(167, 205, 201, 0.7)" }}>
-                        Storage:
-                      </span>
-                      <span
-                        className="ml-2 font-medium"
-                        style={{ color: "#86BBB5" }}
-                      >
+                      <span className="text-secondaryone/70">Storage:</span>
+                      <span className="ml-2 font-medium text-primaryonelight">
                         {reportSuccess.storage.location}
                       </span>
                     </div>
                   </div>
 
                   {/* Report Preview */}
-                  <div
-                    className="mt-3 p-3 rounded-lg"
-                    style={{ backgroundColor: "rgba(167, 205, 201, 0.05)" }}
-                  >
+                  <div className="mt-3 p-3 rounded-lg bg-secondaryone/5">
                     <div className="flex items-center space-x-2 mb-2">
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: "#A7CDC9" }}
-                      >
+                      <span className="text-sm font-medium text-secondaryone">
                         Report Preview
                       </span>
                     </div>
                     <div className="text-xs space-y-1">
-                      <div className="flex items-center space-x-2" style={{ color: "#F9FAFB" }}>
-                        <Thermometer
-                          className="w-4 h-4"
-                          style={{ color: "#A7CDC9" }}
-                        />
-                        <span
-                          className="text-xs font-medium"
-                          style={{ color: "#A7CDC9" }}
-                        >
+                      <div className="flex items-center space-x-2">
+                        <Thermometer className="w-4 h-4 text-secondaryone" />
+                        <span className="text-xs font-medium text-secondaryone">
                           {reportSuccess.preview.current_temp} -{" "}
                           {reportSuccess.preview.weather_desc}
                         </span>
                       </div>
-                      <div className="flex items-center space-x-2" style={{ color: "rgba(167, 205, 201, 0.8)" }}>
-                        <Newspaper
-                          className="w-4 h-4"
-                          style={{ color: "#A7CDC9" }}
-                        />
-                        <span
-                          className="text-xs font-medium"
-                          style={{ color: "#A7CDC9" }}
-                        >
+                      <div className="flex items-center space-x-2">
+                        <Newspaper className="w-4 h-4 text-secondaryone" />
+                        <span className="text-xs font-medium text-secondaryone">
                           {reportSuccess.preview.top_headline ||
                             "Latest news included"}
                         </span>
                       </div>
-                      <div className="flex items-center space-x-2" style={{ color: "rgba(167, 205, 201, 0.6)" }}>
-                        <ChartColumnBig
-                          className="w-4 h-4"
-                          style={{ color: "#A7CDC9" }}
-                        />
-                        <span
-                          className="text-xs font-medium"
-                          style={{ color: "#A7CDC9" }}
-                        >
+                      <div className="flex items-center space-x-2">
+                        <ChartColumnBig className="w-4 h-4 text-secondaryone" />
+                        <span className="text-xs font-medium text-secondaryone">
                           {reportSuccess.preview.forecast_items} forecasts,{" "}
-                          {reportSuccess.preview.news_items} news items{" "}
+                          {reportSuccess.preview.news_items} news items
                         </span>
                       </div>
                     </div>
@@ -282,26 +206,14 @@ function ReportSection({ isLoading, currentCity }) {
 
         {/* Error Message */}
         {reportError && (
-          <div
-            className="rounded-xl p-4 mb-4 border"
-            style={{
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
-              borderColor: "rgba(239, 68, 68, 0.2)",
-            }}
-          >
+          <div className="rounded-xl p-4 mb-4 border border-red-500/20 bg-red-500/10">
             <div className="flex items-center space-x-3">
-              <AlertCircle
-                className="w-5 h-5 flex-shrink-0"
-                style={{ color: "#EF4444" }}
-              />
+              <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400" />
               <div>
-                <h4 className="font-medium" style={{ color: "#F9FAFB" }}>
+                <h4 className="font-medium text-textlight">
                   Report Generation Failed
                 </h4>
-                <p
-                  className="text-sm mt-1"
-                  style={{ color: "rgba(239, 68, 68, 0.8)" }}
-                >
+                <p className="text-sm mt-1 text-red-400/80">
                   {reportError}
                 </p>
               </div>
@@ -312,12 +224,9 @@ function ReportSection({ isLoading, currentCity }) {
         {/* Info Text */}
         {!reportSuccess && !reportError && (
           <div className="text-center">
-            <p
-              className="text-xs"
-              style={{ color: "rgba(167, 205, 201, 0.6)" }}
-            >
+            <p className="text-xs text-secondaryone/60">
               Creates a comprehensive JSON report with current weather, 5-day
-              forecast, and latest news for <strong>{currentCity}</strong>
+              forecast, and latest news for <strong className="text-textlight">{currentCity}</strong>
             </p>
           </div>
         )}
