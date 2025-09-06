@@ -6,6 +6,40 @@ import { getDayOfWeek } from "../hooks/Utilities";
 const ForecastWeatherSection = ({ currentCity, forecast }) => {
   const [forecastList, setForecastList] = useState(null);
 
+  useEffect(() => {
+    if (!forecast) return;
+    setForecastList(
+      forecast.list.filter((item) => item.dt_txt.includes("12:00:00"))
+    );
+  }, [forecast]);
+
+  // Don't render if no forecast data
+  if (!forecast || !forecast.list) {
+    return (
+      <div className="backdrop-blur-lg border rounded-3xl p-8 bg-secondaryone/8 border-secondaryone/15">
+        <div className="animate-pulse">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-6 h-6 bg-secondaryone/30 rounded"></div>
+            <div className="h-6 bg-secondaryone/30 rounded w-32"></div>
+          </div>
+          <div className="grid grid-cols-5 gap-4">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="text-center rounded-xl p-4 bg-secondaryone/5">
+                <div className="h-4 bg-secondaryone/30 rounded w-12 mx-auto mb-3"></div>
+                <div className="w-16 h-16 bg-secondaryone/30 rounded mx-auto mb-3"></div>
+                <div className="space-y-1">
+                  <div className="h-4 bg-secondaryone/30 rounded w-8 mx-auto"></div>
+                  <div className="h-3 bg-secondaryone/30 rounded w-6 mx-auto"></div>
+                  <div className="h-3 bg-secondaryone/30 rounded w-10 mx-auto"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function getForecastWeathers() {
     if (!forecastList) return;
     let forecastWeathers = [];
@@ -22,13 +56,6 @@ const ForecastWeatherSection = ({ currentCity, forecast }) => {
 
     return forecastWeathers;
   }
-
-  useEffect(() => {
-    if (!forecast) return;
-    setForecastList(
-      forecast.list.filter((item) => item.dt_txt.includes("12:00:00"))
-    );
-  }, [forecast]);
 
   return (
     <div

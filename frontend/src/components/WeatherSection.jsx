@@ -99,13 +99,23 @@ const WeatherSection = ({
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
+      setError(null); // Clear previous errors
+
       console.log("currentCity changed to:", currentCity);
       
       try {
-        await Promise.all([
+        const [weatherResult, forecastResult] = await Promise.allSettled([
           getWeather(currentCity),
           getForecast(currentCity)
         ]);
+
+        // Handle any rejected promises
+        if (weatherResult.status === 'rejected') {
+          console.error('Weather fetch failed:', weatherResult.reason);
+        }
+        if (forecastResult.status === 'rejected') {
+          console.error('Forecast fetch failed:', forecastResult.reason);
+        }
       } catch (error) {
         console.error("Error fetching weather data:", error);
       } finally {
@@ -114,7 +124,7 @@ const WeatherSection = ({
     }
 
     fetchData();
-  }, [currentCity]);
+  }, [currentCity, setIsLoading, setCountry]);
 
   // Show error state if needed
   if (error) {
