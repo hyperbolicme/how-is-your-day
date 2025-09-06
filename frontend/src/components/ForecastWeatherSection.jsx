@@ -30,10 +30,6 @@ const ForecastWeatherSection = ({ currentCity, forecast }) => {
     );
   }, [forecast]);
 
-  useEffect(() => {
-    console.log("forecast weathers :", getForecastWeathers());
-  }, [forecastList]);
-
   return (
     <div
       className="backdrop-blur-lg border rounded-3xl p-8"

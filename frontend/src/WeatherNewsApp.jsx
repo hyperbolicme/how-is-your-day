@@ -69,9 +69,9 @@ const WeatherNewsApp = () => {
                 setIsLoading={setIsLoading}
                 setCountry={setCountry}
               />
-              {/* News Section */}
-              <TopNewsSection country={country} setIsLoading={setIsLoading} />
             </div>
+            {/* News Section */}
+            <TopNewsSection country={country} setIsLoading={setIsLoading} />
           </div>
         )}
       </div>

@@ -84,7 +84,7 @@ function ReportSection({ isLoading, currentCity, country, onViewReports }) {
   return (
     <div className="mb-8">
       <div className="backdrop-blur-lg border border-secondaryone/15 bg-secondaryone/10 rounded-2xl p-6">
-        {/* Report Generation Button */}
+        {/* Report Generation Section Header and Buttons */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <FileText className="w-10 h-10 text-secondaryone" />
@@ -98,40 +98,48 @@ function ReportSection({ isLoading, currentCity, country, onViewReports }) {
             </div>
           </div>
 
-          <button
-            onClick={generateDailyReport}
-            disabled={isGeneratingReport || isLoading}
-            className={`
-              flex items-center space-x-2 px-6 py-3 rounded-xl font-medium
-              transition-all duration-200 transform hover:scale-105
-              disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-              text-textlight shadow-lg hover:shadow-secondaryone/20
-              ${isGeneratingReport 
-                ? "animate-pulse bg-secondaryone/15 shadow-none" 
-                : "bg-secondaryone/20 shadow-secondaryone/15"
-              }
-            `}
-          >
+          {/* Button Group */}
+          <div className="flex items-center space-x-3">
+            {/* My Reports Button */}
+            <button
+              onClick={onViewReports}
+              className="
+                flex items-center space-x-2 px-4 py-2 rounded-xl font-medium 
+                transition-all duration-200 transform hover:scale-105 
+                bg-primaryonelight/20 text-textlight hover:bg-primaryonelight/30"
+            >
+              <FileText className="w-4 h-4" />
+              <span>My Reports</span>
+            </button>
 
-          <button
-            onClick={onViewReports}
-            className="flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 bg-primaryonelight/20 text-textlight hover:bg-primaryonelight/30"
-          >
-        <FileText className="w-4 h-4" />
-        <span>My Reports</span>
-        </button>  
-            {isGeneratingReport ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondaryone/30 border-t-secondaryone"></div>
-                <span>Generating...</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4" />
-                <span>Generate Report</span>
-              </>
-            )}
-          </button>
+            {/* Generate Report Button */}
+            <button
+              onClick={generateDailyReport}
+              disabled={isGeneratingReport || isLoading}
+              className={`
+                flex items-center space-x-2 px-4 py-2 rounded-xl font-medium
+                transition-all duration-200 transform hover:scale-105
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+                text-textlight  hover:bg-primaryonelight/30
+                ${isGeneratingReport 
+                  ? "animate-pulse bg-secondaryone/15 shadow-none" 
+                  : "bg-secondaryone/20 shadow-secondaryone/15"
+                }
+              `}
+            >
+              {isGeneratingReport ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondaryone/30 border-t-secondaryone"></div>
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  <span>Generate Report</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Success Message */}
