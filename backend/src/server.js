@@ -24,17 +24,19 @@ const PORT = config.port;
 // Security middleware
 app.use(helmet());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.max,
-  message: {
-    success: false,
-    error: 'Too many requests from this IP, please try again later.',
-    retryAfter: Math.ceil(config.rateLimit.windowMs / 1000)
-  }
-});
-app.use('/api/', limiter);
+// Rate limiting (only in production)
+if (config.nodeEnv === 'production') {
+    const limiter = rateLimit({
+      windowMs: config.rateLimit.windowMs,
+      max: config.rateLimit.max,
+      message: {
+        success: false,
+        error: 'Too many requests from this IP, please try again later.',
+        retryAfter: Math.ceil(config.rateLimit.windowMs / 1000)
+      }
+    });
+    app.use('/api/', limiter);
+}
 
 // CORS middleware
 app.use(corsMiddleware);
