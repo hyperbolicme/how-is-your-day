@@ -22,9 +22,35 @@ const app = express();
 const PORT = config.port;
 
 // Security middleware
-app.use(helmet());
+if (config.nodeEnv === 'production') {
+    // Production: Full Helmet security (assumes HTTPS)
+    app.use(helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", "data:", "https:"],
+        },
+      },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+      }
+    }));
+} else {
+    // Development: Relaxed Helmet (allows HTTP)
+    app.use(helmet({
+        contentSecurityPolicy: false,
+        hsts: false, // Don't force HTTPS in development
+        crossOriginEmbedderPolicy: false
+    }));
+}
 
-// Rate limiting (only in production)
+
+// // Rate limiting (only in production)
 if (config.nodeEnv === 'production') {
     const limiter = rateLimit({
       windowMs: config.rateLimit.windowMs,
@@ -45,10 +71,8 @@ app.use(corsMiddleware);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files from React build (only in production)
-if (config.nodeEnv === 'production') {
-  app.use(express.static(path.join(__dirname, '../../frontend/dist')));
-}
+// Serve static files from React build 
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 // Request logging middleware
 app.use((req, res, next) => {
