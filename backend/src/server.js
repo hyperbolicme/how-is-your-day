@@ -47,7 +47,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files from React build (only in production)
 if (config.nodeEnv === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 }
 
 // Request logging middleware
@@ -65,7 +65,7 @@ app.use(routes);
 // Handle React routing (only in production)
 if (config.nodeEnv === 'production') {
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+    res.sendFile(path.join(__dirname, '../../frontend/dist', 'index.html'));
   });
 }
 
