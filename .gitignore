@@ -28,3 +28,8 @@ dist-ssr
 backend/cache/*.json
 CLAUDE.md
 backend/local-reports/*.json
+backend/server copy.js
+backend/cleanup.sh
+backend/migration-guide.md
+backend/phase-1-testing.sh
+backend/refactoring-setup.sh
