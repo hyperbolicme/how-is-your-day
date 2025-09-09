@@ -7,7 +7,7 @@ set -e  # Exit on any error
 DEFAULT_APP_DIR="/home/ubuntu/how-is-your-day"
 GIT_REPO="https://github.com/hyperbolicme/how-is-your-day.git"
 S3_BUCKET="how-is-your-day-frontend-hyperbolicme"
-PM2_APP_NAME="weather-api"
+PM2_APP_NAME="weather-news-api"
 
 # Parse command line arguments
 FRESH_DEPLOY=false

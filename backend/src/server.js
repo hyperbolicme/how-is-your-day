@@ -87,11 +87,11 @@ app.use((req, res, next) => {
 app.use(routes);
 
 // Handle React routing (only in production)
-if (config.nodeEnv === 'production') {
+// if (config.nodeEnv === 'production') {
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../../frontend/dist', 'index.html'));
   });
-}
+// }
 
 // 404 handler for API routes
 app.use('/api/*', notFoundHandler);
