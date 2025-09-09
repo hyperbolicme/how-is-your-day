@@ -8,4 +8,10 @@ const router = express.Router();
 router.get('/health', healthController.healthCheck);
 router.get('/test-s3', healthController.testS3);
 
+// Server info routes
+router.get('/server-info', healthController.serverInfo);
+router.get('/external-ip', healthController.externalIP);
+router.get('/aws-metadata', healthController.ec2Metadata);
+router.get('/deployment-status', healthController.deploymentStatus);
+
 module.exports = router;
