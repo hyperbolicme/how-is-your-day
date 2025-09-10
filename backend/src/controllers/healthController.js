@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
 
 class HealthController {
   // IMDSv2 helper functions
-  async getIMDSToken() {
+  getIMDSToken = async () => {
     try {
       const fetch = (await import('node-fetch')).default;
       const response = await fetch('http://169.254.169.254/latest/api/token', {
@@ -25,7 +25,7 @@ class HealthController {
     }
   }
 
-  async getMetadata(endpoint) {
+  getMetadata = async (endpoint) => {
     try {
       const token = await this.getIMDSToken();
       if (!token) return null;
@@ -48,7 +48,7 @@ class HealthController {
   }
 
   // Basic health check
-  async healthCheck(req, res) {
+  healthCheck = async (req, res) => {
     try {
       const cacheStats = await cacheService.getStats();
       
@@ -73,7 +73,7 @@ class HealthController {
   }
 
   // Test S3 connectivity
-  async testS3(req, res, next) {
+  testS3 = async (req, res, next) => {
     try {
       logger.info('S3 connectivity test request');
       const result = await s3Service.testConnection();
@@ -85,7 +85,7 @@ class HealthController {
   }
 
   // Enhanced server info endpoint with IMDSv2
-  async serverInfo(req, res) {
+  serverInfo = async (req, res) => {
     const os = require('os');
     
     // Get AWS metadata using IMDSv2
@@ -119,7 +119,7 @@ class HealthController {
   }
 
   // Get external IP address
-  async externalIP(req, res) {
+  externalIP = async (req, res) => {
     try {
       const fetch = require('node-fetch');
       
@@ -164,7 +164,7 @@ class HealthController {
   }
 
   // AWS EC2 metadata endpoint with IMDSv2 (only works on EC2 server)
-  async ec2Metadata(req, res) {
+  ec2Metadata = async (req, res) => {
     try {
       // Get all metadata using IMDSv2
       const [publicIP, privateIP, instanceId, instanceType, availabilityZone] = await Promise.all([
@@ -203,7 +203,7 @@ class HealthController {
   }
 
   // Enhanced deployment status with IMDSv2
-  async deploymentStatus(req, res) {
+  deploymentStatus = async (req, res) => {
     try {
       const os = require('os');
       const fetch = (await import('node-fetch')).default;
