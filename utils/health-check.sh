@@ -107,6 +107,18 @@ check_ec2_resources() {
     # CPU load
     CPU_LOAD=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | sed 's/,//')
     echo -e "${BLUE}ℹ CPU load: ${CPU_LOAD}${NC}"
+    
+    # AWS Instance details (using IMDSv2)
+    INSTANCE_TYPE=$(get_metadata "instance-type")
+    AZ=$(get_metadata "placement/availability-zone")
+    
+    if [ -n "$INSTANCE_TYPE" ]; then
+        echo -e "${BLUE}ℹ Instance type: ${INSTANCE_TYPE}${NC}"
+    fi
+    
+    if [ -n "$AZ" ]; then
+        echo -e "${BLUE}ℹ Availability zone: ${AZ}${NC}"
+    fi
 }
 
 check_external_access() {
