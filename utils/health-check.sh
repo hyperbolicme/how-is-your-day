@@ -1,14 +1,7 @@
 #!/bin/bash
-# health-check.sh - Comprehensive application health monitoring script
+# health-check.sh - Comprehensive application health monitoring script with IMDSv2
 
 set -e
-
-# Configuration
-BACKEND_URL="http://localhost:5001"
-S3_REPORTS_BUCKET="weather-app-reports-hyperbolicme"
-S3_FRONTEND_BUCKET="how-is-your-day-frontend-hyperbolicme"
-EC2_INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || echo "unknown")
-LOG_FILE="/tmp/health-check-$(date +%Y%m%d).log"
 
 # Colors for output
 RED='\033[0;31m'
@@ -16,6 +9,37 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# IMDSv2 functions - DEFINED FIRST!
+get_imds_token() {
+    curl -X PUT "http://169.254.169.254/latest/api/token" \
+         -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" \
+         -s 2>/dev/null || echo ""
+}
+
+get_metadata() {
+    local endpoint=$1
+    local token=$(get_imds_token)
+    
+    if [ -n "$token" ]; then
+        curl -H "X-aws-ec2-metadata-token: $token" \
+             -s "http://169.254.169.254/latest/meta-data/$endpoint" 2>/dev/null || echo ""
+    else
+        echo ""
+    fi
+}
+
+# Configuration - NOW the functions are available
+BACKEND_URL="http://localhost:5001"
+S3_REPORTS_BUCKET="weather-app-reports-hyperbolicme"
+S3_FRONTEND_BUCKET="how-is-your-day-frontend-hyperbolicme"
+LOG_FILE="/tmp/health-check-$(date +%Y%m%d).log"
+
+# Get instance ID using IMDSv2
+EC2_INSTANCE_ID=$(get_metadata "instance-id")
+if [ -z "$EC2_INSTANCE_ID" ]; then
+    EC2_INSTANCE_ID="unknown"
+fi
 
 # Logging function
 log() {
@@ -124,8 +148,8 @@ check_ec2_resources() {
 check_external_access() {
     log "🌐 Checking external accessibility..."
     
-    # Get public IP - try EC2 metadata first, then fallback to external service
-    PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null)
+    # Get public IP using IMDSv2 first, then fallback to external service
+    PUBLIC_IP=$(get_metadata "public-ipv4")
     
     # If empty or failed, use external service
     if [ -z "$PUBLIC_IP" ] || [ "$PUBLIC_IP" = "" ]; then
