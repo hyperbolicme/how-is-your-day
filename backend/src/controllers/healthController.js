@@ -4,6 +4,49 @@ const s3Service = require('../services/s3Service');
 const logger = require('../utils/logger');
 
 class HealthController {
+  // IMDSv2 helper functions
+  async getIMDSToken() {
+    try {
+      const fetch = (await import('node-fetch')).default;
+      const response = await fetch('http://169.254.169.254/latest/api/token', {
+        method: 'PUT',
+        headers: {
+          'X-aws-ec2-metadata-token-ttl-seconds': '21600'
+        },
+        timeout: 2000
+      });
+      
+      if (response.ok) {
+        return await response.text();
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async getMetadata(endpoint) {
+    try {
+      const token = await this.getIMDSToken();
+      if (!token) return null;
+
+      const fetch = (await import('node-fetch')).default;
+      const response = await fetch(`http://169.254.169.254/latest/meta-data/${endpoint}`, {
+        headers: {
+          'X-aws-ec2-metadata-token': token
+        },
+        timeout: 2000
+      });
+
+      if (response.ok) {
+        return await response.text();
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   // Basic health check
   async healthCheck(req, res) {
     try {
@@ -41,9 +84,14 @@ class HealthController {
     }
   }
 
-  // Basic server info endpoint
+  // Enhanced server info endpoint with IMDSv2
   async serverInfo(req, res) {
     const os = require('os');
+    
+    // Get AWS metadata using IMDSv2
+    const instanceId = await this.getMetadata('instance-id');
+    const instanceType = await this.getMetadata('instance-type');
+    const availabilityZone = await this.getMetadata('placement/availability-zone');
     
     res.json({
       server: {
@@ -53,6 +101,12 @@ class HealthController {
         port: process.env.PORT || 5001,
         node_version: process.version,
         timestamp: new Date().toISOString()
+      },
+      aws: {
+        instance_id: instanceId || 'Not available',
+        instance_type: instanceType || 'Not available',
+        availability_zone: availabilityZone || 'Not available',
+        is_ec2: !!instanceId
       },
       network: {
         interfaces: os.networkInterfaces()
@@ -67,7 +121,7 @@ class HealthController {
   // Get external IP address
   async externalIP(req, res) {
     try {
-      const fetch = require('node-fetch'); 
+      const fetch = require('node-fetch');
       
       // Use multiple services for reliability
       const ipServices = [
@@ -109,32 +163,33 @@ class HealthController {
     }
   }
 
-  // AWS EC2 metadata endpoint (only works on EC2 server)
+  // AWS EC2 metadata endpoint with IMDSv2 (only works on EC2 server)
   async ec2Metadata(req, res) {
     try {
-      const fetch = require('node-fetch');
-      
-      // EC2 metadata service endpoint
-      const metadataBase = 'http://169.254.169.254/latest/meta-data/';
-      
-      const [publicIP, privateIP, instanceId, instanceType] = await Promise.all([
-        fetch(metadataBase + 'public-ipv4').then(r => r.text()).catch(() => 'N/A'),
-        fetch(metadataBase + 'local-ipv4').then(r => r.text()).catch(() => 'N/A'),
-        fetch(metadataBase + 'instance-id').then(r => r.text()).catch(() => 'N/A'),
-        fetch(metadataBase + 'instance-type').then(r => r.text()).catch(() => 'N/A')
+      // Get all metadata using IMDSv2
+      const [publicIP, privateIP, instanceId, instanceType, availabilityZone] = await Promise.all([
+        this.getMetadata('public-ipv4'),
+        this.getMetadata('local-ipv4'),
+        this.getMetadata('instance-id'),
+        this.getMetadata('instance-type'),
+        this.getMetadata('placement/availability-zone')
       ]);
+      
+      const port = process.env.PORT || 5001;
       
       res.json({
         aws_metadata: {
-          public_ip: publicIP,
-          private_ip: privateIP,
-          instance_id: instanceId,
-          instance_type: instanceType,
-          port: process.env.PORT || 5001,
-          frontend_url: publicIP !== 'N/A' ? `http://${publicIP}:${process.env.PORT || 5001}` : null,
-          api_base: publicIP !== 'N/A' ? `http://${publicIP}:${process.env.PORT || 5001}/api` : null
+          public_ip: publicIP || 'N/A',
+          private_ip: privateIP || 'N/A',
+          instance_id: instanceId || 'N/A',
+          instance_type: instanceType || 'N/A',
+          availability_zone: availabilityZone || 'N/A',
+          port: port,
+          frontend_url: publicIP ? `http://${publicIP}:${port}` : null,
+          api_base: publicIP ? `http://${publicIP}:${port}/api` : null
         },
-        is_ec2: publicIP !== 'N/A',
+        is_ec2: !!instanceId,
+        metadata_version: 'IMDSv2',
         checked_at: new Date().toISOString()
       });
       
@@ -142,15 +197,16 @@ class HealthController {
       res.status(500).json({
         error: 'Failed to get AWS metadata',
         message: error.message,
-        note: 'This only works on EC2 instances'
+        note: 'This endpoint uses IMDSv2 and only works on EC2 instances'
       });
     }
   }
 
+  // Enhanced deployment status with IMDSv2
   async deploymentStatus(req, res) {
     try {
       const os = require('os');
-      const fetch = require('node-fetch');
+      const fetch = (await import('node-fetch')).default;
       
       // Get external IP
       let externalIP = null;
@@ -159,31 +215,37 @@ class HealthController {
         const data = await response.json();
         externalIP = data.ip;
       } catch (err) {
-        // Fallback
         externalIP = 'Unable to determine';
       }
       
-      // Get AWS metadata if available
-      let awsMetadata = {};
-      try {
-        const publicIPResponse = await fetch('http://169.254.169.254/latest/meta-data/public-ipv4');
-        awsMetadata.public_ip = await publicIPResponse.text();
-        awsMetadata.is_ec2 = true;
-      } catch {
-        awsMetadata.is_ec2 = false;
-      }
+      // Get AWS metadata using IMDSv2
+      const [instanceId, publicIP, instanceType, availabilityZone] = await Promise.all([
+        this.getMetadata('instance-id'),
+        this.getMetadata('public-ipv4'),
+        this.getMetadata('instance-type'),
+        this.getMetadata('placement/availability-zone')
+      ]);
+      
+      const awsMetadata = {
+        is_ec2: !!instanceId,
+        instance_id: instanceId || 'N/A',
+        public_ip: publicIP || null,
+        instance_type: instanceType || 'N/A',
+        availability_zone: availabilityZone || 'N/A',
+        metadata_version: 'IMDSv2'
+      };
       
       const port = process.env.PORT || 5001;
-      const deploymentIP = awsMetadata.public_ip || externalIP;
+      const deploymentIP = publicIP || externalIP;
       
       res.json({
         deployment: {
           status: 'active',
-          platform: awsMetadata.is_ec2 ? 'AWS EC2' : 'Unknown',
+          platform: awsMetadata.is_ec2 ? 'AWS EC2' : 'Unknown Platform',
           ip_address: deploymentIP,
           port: port,
-          frontend_url: `http://${deploymentIP}:${port}`,
-          api_base: `http://${deploymentIP}:${port}/api`,
+          frontend_url: deploymentIP !== 'Unable to determine' ? `http://${deploymentIP}:${port}` : 'Unable to determine',
+          api_base: deploymentIP !== 'Unable to determine' ? `http://${deploymentIP}:${port}/api` : 'Unable to determine',
           uptime: os.uptime(),
           node_version: process.version,
           last_checked: new Date().toISOString()
@@ -204,7 +266,6 @@ class HealthController {
       });
     }
   }
-
 }
 
 module.exports = new HealthController();
