@@ -46,7 +46,7 @@ const dbConfig = {
   host: process.env.RDS_HOST || 'your-rds-endpoint.ap-south-1.rds.amazonaws.com',
   user: process.env.RDS_USER || 'admin',
   password: process.env.RDS_PASSWORD || 'your-password',
-  // database: process.env.RDS_DATABASE || 'weatherapp',
+  database: process.env.RDS_DATABASE || 'weatherapp',
   port: process.env.RDS_PORT || 3306,
   charset: 'utf8mb4',
   timezone: 'Z',
