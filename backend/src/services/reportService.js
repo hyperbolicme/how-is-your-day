@@ -108,7 +108,7 @@ class ReportService {
       const recentReportsQuery = `
         SELECT COUNT(*) as recent_reports 
         FROM weather_reports 
-        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAYS)
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
       `;
       
       // Get city breakdown
@@ -164,10 +164,10 @@ class ReportService {
         FROM weather_reports 
         WHERE city = ? 
         ORDER BY created_at DESC 
-        LIMIT ?
+        LIMIT ${parseInt(limit)}
       `;
-      
-      const reports = await dbService.executeQuery(query, [city, limit]);
+
+      const reports = await dbService.executeQuery(query, [city]);
       
       return {
         success: true,
