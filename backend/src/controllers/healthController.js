@@ -266,6 +266,49 @@ class HealthController {
       });
     }
   }
+
+  // Database health check endpoint
+  async databaseHealth(req, res) {
+    try {
+      const { dbService, testConnection } = require('../config/database');
+      
+      // Test basic connection
+      const connectionTest = await testConnection();
+      
+      // Test database operations
+      const configCheck = await dbService.executeQuery('SELECT COUNT(*) as config_count FROM app_config');
+      const reportsCheck = await dbService.executeQuery('SELECT COUNT(*) as reports_count FROM weather_reports');
+      const citiesCheck = await dbService.executeQuery('SELECT COUNT(*) as cities_count FROM city_searches');
+      
+      // Get some sample configuration
+      const sampleConfig = await dbService.executeQuery('SELECT * FROM app_config LIMIT 3');
+      
+      res.json({
+        success: true,
+        database: {
+          connection: connectionTest,
+          tables: {
+            app_config: configCheck[0],
+            weather_reports: reportsCheck[0], 
+            city_searches: citiesCheck[0]
+          },
+          sample_config: sampleConfig,
+          rds_endpoint: process.env.RDS_HOST || 'Not configured',
+          database_name: process.env.RDS_DATABASE || 'Not configured'
+        },
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      logger.error('Database health check failed:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Database health check failed',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
 }
 
 module.exports = new HealthController();

@@ -7,6 +7,7 @@ const router = express.Router();
 // Health check routes
 router.get('/health', healthController.healthCheck);
 router.get('/test-s3', healthController.testS3);
+router.get('/database-health', healthController.databaseHealth);
 
 // Server info routes
 router.get('/server-info', healthController.serverInfo);
