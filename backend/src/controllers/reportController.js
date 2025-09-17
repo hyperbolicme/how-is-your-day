@@ -9,8 +9,9 @@ class ReportController {
     try {
       const { city, country } = req.validatedBody;
       
-      logger.info(`Report generation request for: ${city}, ${country}`);
-      const result = await reportService.generateReport(city, country);
+      logger.info(`Enhanced report generation request for: ${city}, ${country}`);
+      // Use the enhanced version with database integration
+      const result = await reportService.generateReportWithDB(city, country);
       
       res.status(HTTP_STATUS.CREATED).json(result);
     } catch (error) {
