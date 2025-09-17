@@ -43,6 +43,39 @@ class ReportController {
       next(error);
     }
   }
+
+  // Enhanced report generation endpoint
+  async generateReportEnhanced(req, res, next) {
+    try {
+      const { city, country } = req.body;
+      const result = await reportService.generateReportWithDB(city, country);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Report statistics endpoint  
+  async getReportStats(req, res, next) {
+    try {
+      const stats = await reportService.getReportStats();
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Reports by city endpoint
+  async getReportsByCity(req, res, next) {
+    try {
+      const { city } = req.params;
+      const limit = req.query.limit || 10;
+      const reports = await reportService.getReportsByCity(city, limit);
+      res.json(reports);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new ReportController();

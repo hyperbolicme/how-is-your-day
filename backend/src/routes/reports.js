@@ -9,5 +9,8 @@ const router = express.Router();
 router.post('/generate-report', validateReportGeneration, reportController.generateReport);
 router.get('/my-reports', reportController.listReports);
 router.get('/report/:filename', validateFilename, reportController.getReport);
+router.post('/generate-report-enhanced', validateReportGeneration, reportController.generateReportEnhanced);
+router.get('/stats', reportController.getReportStats);
+router.get('/by-city/:city', reportController.getReportsByCity);
 
 module.exports = router;
