@@ -21,7 +21,10 @@ function MyReportsPage ({ onBack }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [storageLocation, setStorageLocation] = useState(null);
-
+  const [showStats, setShowStats] = useState(false);
+  const [statsData, setStatsData] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  
   const fetchReports = async () => {
     try {
       setIsLoading(true);
@@ -138,6 +141,31 @@ function MyReportsPage ({ onBack }) {
     return 'Unknown City';
   };
 
+  // Fetches report stats from database
+  const fetchStats = async () => {
+    try {
+      setStatsLoading(true);
+      console.log("Fetching database stats...");
+      
+      const response = await fetch(`${API_BASE_URL}/api/stats`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      setStatsData(data);
+      setShowStats(true);
+      console.log("Stats fetched successfully");
+      
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      alert(`Failed to fetch stats: ${error.message}`);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen font-mont" style={{
@@ -177,6 +205,25 @@ function MyReportsPage ({ onBack }) {
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
+
+            {/* New Stats Button */}
+            <button
+              onClick={fetchStats}
+              disabled={statsLoading}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-50 transition-colors"
+            >
+              <Clock className={`w-4 h-4 ${statsLoading ? 'animate-spin' : ''}`} />
+              <span>Stats</span>
+            </button>
+
+            {showStats && (
+              <button
+                onClick={() => setShowStats(false)}
+                className="px-3 py-1 text-sm rounded bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 transition-colors"
+              >
+                Hide Stats
+              </button>
+            )}
           </div>
           
           <div className="text-center">
@@ -310,6 +357,18 @@ function MyReportsPage ({ onBack }) {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {showStats && statsData && (
+          <div className="mt-8 p-4 bg-gray-800/50 rounded-lg">
+            <h3 className="text-lg font-medium text-white mb-3 flex items-center space-x-2">
+              <Clock className="w-5 h-5" />
+              <span>Database Statistics</span>
+            </h3>
+            <pre className="text-sm text-gray-300 whitespace-pre-wrap overflow-x-auto bg-gray-900/50 p-3 rounded">
+              {JSON.stringify(statsData, null, 2)}
+            </pre>
           </div>
         )}
       </div>
