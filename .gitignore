@@ -33,3 +33,9 @@ backend/cleanup.sh
 backend/migration-guide.md
 backend/phase-1-testing.sh
 backend/refactoring-setup.sh
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
